@@ -1,8 +1,13 @@
 from dataclasses import dataclass
+from datetime import UTC
+from datetime import datetime
+import uuid
 
+from app.schemas.models import StoredWorkflowPlan
 from app.schemas.models import WorkflowPlanRequest
 from app.schemas.models import WorkflowPlanResponse
 from app.schemas.models import WorkflowStep
+from app.services.store import WorkflowStore
 
 
 @dataclass(frozen=True)
@@ -16,6 +21,9 @@ class WorkflowTemplate:
 
 
 class WorkflowCopilot:
+    def __init__(self, store: WorkflowStore | None = None) -> None:
+        self.store = store or WorkflowStore()
+
     def build_plan(self, request: WorkflowPlanRequest) -> WorkflowPlanResponse:
         workflow_type = self._detect_workflow_type(request.request_text)
         template = self._template_for(workflow_type)
@@ -25,11 +33,12 @@ class WorkflowCopilot:
 
         steps = [
             WorkflowStep(
+                step_id=f"step-{index}",
                 title=title.format(team_name=team_name),
                 owner=assigned_owner if assigned_owner != "requester" else owner,
                 rationale=self._build_rationale(title, workflow_type),
             )
-            for title, assigned_owner in template.steps
+            for index, (title, assigned_owner) in enumerate(template.steps, start=1)
         ]
 
         return WorkflowPlanResponse(
@@ -41,6 +50,42 @@ class WorkflowCopilot:
             missing_inputs=self._expand_missing_inputs(template.missing_inputs, request.request_text),
             follow_up_questions=self._follow_up_questions(workflow_type, request.request_text),
             success_checks=template.success_checks,
+        )
+
+    def create_plan(self, request: WorkflowPlanRequest) -> StoredWorkflowPlan:
+        plan = self.build_plan(request)
+        timestamp = self._timestamp()
+        return self.store.save_plan(
+            workflow_id=f"wf-{uuid.uuid4().hex[:12]}",
+            request_text=request.request_text,
+            requester_role=request.requester_role,
+            team_name=request.team_name,
+            workflow_type=plan.workflow_type,
+            summary=plan.summary,
+            urgency=plan.urgency,
+            steps=plan.steps,
+            risks=plan.risks,
+            missing_inputs=plan.missing_inputs,
+            follow_up_questions=plan.follow_up_questions,
+            success_checks=plan.success_checks,
+            created_at=timestamp,
+            updated_at=timestamp,
+        )
+
+    def list_plans(self) -> list[StoredWorkflowPlan]:
+        summaries = self.store.list_plans()
+        plans = [self.store.get_plan(item.workflow_id) for item in summaries]
+        return [plan for plan in plans if plan is not None]
+
+    def get_plan(self, workflow_id: str) -> StoredWorkflowPlan | None:
+        return self.store.get_plan(workflow_id)
+
+    def update_step_status(self, workflow_id: str, step_id: str, status: str) -> StoredWorkflowPlan | None:
+        return self.store.update_step_status(
+            workflow_id=workflow_id,
+            step_id=step_id,
+            status=status,
+            updated_at=self._timestamp(),
         )
 
     def _detect_workflow_type(self, request_text: str) -> str:
@@ -220,3 +265,6 @@ class WorkflowCopilot:
         if "team" not in request_text.lower():
             questions.append("Which team is responsible for execution?")
         return questions
+
+    def _timestamp(self) -> str:
+        return datetime.now(UTC).replace(microsecond=0).isoformat()

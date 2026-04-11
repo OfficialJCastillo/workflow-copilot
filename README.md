@@ -19,6 +19,7 @@ This repository is intentionally scoped to deterministic local logic so it stays
 
 - Local FastAPI service
 - Deterministic workflow planning with no hosted dependencies
+- SQLite-backed workflow persistence for saved plans and step updates
 - Workflow categories for onboarding, incident response, release prep, vendor approval, and recurring operations
 - Structured response schema with steps, blockers, risks, and follow-up questions
 - Simple urgency and risk heuristics
@@ -58,15 +59,21 @@ uvicorn main:app --reload
 
 - `GET /health`
 - `POST /workflow/plan`
+- `POST /workflow/plans`
+- `GET /workflow/plans`
+- `GET /workflow/plans/{workflow_id}`
+- `PATCH /workflow/plans/{workflow_id}/steps/{step_id}`
 
 ## Example Response
 
 ```json
 {
+  "workflow_id": "wf-3f6fd803523a",
   "workflow_type": "release_preparation",
   "summary": "Plan a controlled release with approvals, validation, and rollback readiness.",
   "steps": [
     {
+      "step_id": "step-1",
       "title": "Confirm release scope and deadline",
       "owner": "requester",
       "status": "pending"
@@ -85,11 +92,10 @@ uvicorn main:app --reload
 
 - The service is intentionally deterministic so the output is inspectable and stable.
 - The workflow categories are implemented as lightweight templates plus request-specific heuristics.
-- This makes the repo useful as a product scaffold even before adding an LLM-backed planning layer.
+- SQLite persistence makes the scaffold usable for saved workflows, step tracking, and simple product demos even before adding an LLM-backed planning layer.
 
 ## Roadmap
 
-- add persistent workflow state and step updates
 - add calendar-aware due date handling
 - add user and team assignment rules
 - add Slack/Jira adapter examples
