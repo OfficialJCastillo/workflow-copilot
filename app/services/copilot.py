@@ -22,7 +22,7 @@ class WorkflowTemplate:
 
 class WorkflowCopilot:
     def __init__(self, store: WorkflowStore | None = None) -> None:
-        self.store = store or WorkflowStore()
+        self.store = store
 
     def build_plan(self, request: WorkflowPlanRequest) -> WorkflowPlanResponse:
         workflow_type = self._detect_workflow_type(request.request_text)
@@ -55,7 +55,7 @@ class WorkflowCopilot:
     def create_plan(self, request: WorkflowPlanRequest) -> StoredWorkflowPlan:
         plan = self.build_plan(request)
         timestamp = self._timestamp()
-        return self.store.save_plan(
+        return self._store().save_plan(
             workflow_id=f"wf-{uuid.uuid4().hex[:12]}",
             request_text=request.request_text,
             requester_role=request.requester_role,
@@ -73,20 +73,26 @@ class WorkflowCopilot:
         )
 
     def list_plans(self) -> list[StoredWorkflowPlan]:
-        summaries = self.store.list_plans()
-        plans = [self.store.get_plan(item.workflow_id) for item in summaries]
+        store = self._store()
+        summaries = store.list_plans()
+        plans = [store.get_plan(item.workflow_id) for item in summaries]
         return [plan for plan in plans if plan is not None]
 
     def get_plan(self, workflow_id: str) -> StoredWorkflowPlan | None:
-        return self.store.get_plan(workflow_id)
+        return self._store().get_plan(workflow_id)
 
     def update_step_status(self, workflow_id: str, step_id: str, status: str) -> StoredWorkflowPlan | None:
-        return self.store.update_step_status(
+        return self._store().update_step_status(
             workflow_id=workflow_id,
             step_id=step_id,
             status=status,
             updated_at=self._timestamp(),
         )
+
+    def _store(self) -> WorkflowStore:
+        if self.store is None:
+            self.store = WorkflowStore()
+        return self.store
 
     def _detect_workflow_type(self, request_text: str) -> str:
         text = request_text.lower()

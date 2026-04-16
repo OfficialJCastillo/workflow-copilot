@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from fastapi import HTTPException
+from app.api.demo_ui import render_demo_ui
 from app.schemas.models import WorkflowPlanRequest
 from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowPlanResponse
@@ -10,6 +11,11 @@ from app.services.copilot import WorkflowCopilot
 
 router = APIRouter()
 copilot = WorkflowCopilot()
+
+
+@router.get("/", include_in_schema=False)
+def demo_ui():
+    return render_demo_ui()
 
 
 @router.get("/health")
