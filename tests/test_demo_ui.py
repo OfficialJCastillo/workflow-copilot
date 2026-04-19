@@ -12,4 +12,5 @@ def test_demo_ui_serves_html() -> None:
     assert "text/html" in response.headers["content-type"]
     assert "workflow-copilot demo UI" in response.text
     assert "Generate workflow plan" in response.text
-
+    assert "Save plan" in response.text
+    assert "Recent saved plans" in response.text
