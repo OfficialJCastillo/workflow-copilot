@@ -14,3 +14,5 @@ def test_demo_ui_serves_html() -> None:
     assert "Generate workflow plan" in response.text
     assert "Save plan" in response.text
     assert "Recent saved plans" in response.text
+    assert "Progress:" in response.text
+    assert "Updated:" in response.text

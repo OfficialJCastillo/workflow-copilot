@@ -46,6 +46,9 @@ class WorkflowPlanListItem(BaseModel):
     summary: str
     urgency: str
     request_text: str
+    step_status_counts: dict[str, int]
+    completed_step_count: int
+    total_step_count: int
     created_at: str
     updated_at: str
 

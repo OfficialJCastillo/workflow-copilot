@@ -31,7 +31,8 @@ Tiny browser demo preview:
 - Workflow categories for onboarding, incident response, release prep, vendor approval, and recurring operations
 - Structured response schema with steps, blockers, risks, and follow-up questions
 - Request-aware urgency, summary, risk, and missing-input heuristics for edge cases like vague asks and conflicting timelines
-- Tiny demo UI for previewing and saving live plan responses at `GET /`
+- Tiny demo UI for previewing, saving, and reopening live plan responses at `GET /`
+- Saved-plan list metadata with progress counts plus created and updated timestamps
 - Smoke tests for the API-facing pipeline
 
 ## Architecture
@@ -91,6 +92,7 @@ The root page provides a lightweight one-screen flow to:
 - preview the live structured plan response from `POST /workflow/plan`
 - save the current request through `POST /workflow/plans`
 - reopen recent saved plans from the local SQLite store
+- see saved-plan progress, created timestamps, and updated timestamps in the history list
 - inspect steps, risks, missing inputs, follow-up questions, and success checks without using a separate API client
 
 ## Example Saved Plan Response
@@ -117,12 +119,14 @@ The root page provides a lightweight one-screen flow to:
 }
 ```
 
+The saved-plan list endpoint also returns compact progress metadata such as `completed_step_count`, `total_step_count`, and `step_status_counts` so the demo can show history state without fetching every full plan first.
+
 ## Design Notes
 
 - The service is intentionally deterministic so the output is inspectable and stable.
 - The workflow categories are implemented as lightweight templates plus request-specific heuristics.
 - SQLite persistence makes the scaffold usable for saved workflows, step tracking, and simple product demos even before adding an LLM-backed planning layer.
-- The tiny browser demo now previews plans live, saves them into the local SQLite store, and reloads recent plans without adding a separate frontend stack.
+- The tiny browser demo previews plans live, saves them into the local SQLite store, shows progress metadata, and reloads recent plans without adding a separate frontend stack.
 
 ## GitHub Setup Notes
 
