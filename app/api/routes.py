@@ -35,19 +35,7 @@ def create_workflow_plan(request: WorkflowPlanRequest) -> StoredWorkflowPlan:
 
 @router.get("/workflow/plans", response_model=list[WorkflowPlanListItem])
 def list_workflow_plans() -> list[WorkflowPlanListItem]:
-    plans = copilot.list_plans()
-    return [
-        WorkflowPlanListItem(
-            workflow_id=plan.workflow_id,
-            workflow_type=plan.workflow_type,
-            summary=plan.summary,
-            urgency=plan.urgency,
-            request_text=plan.request_text,
-            created_at=plan.created_at,
-            updated_at=plan.updated_at,
-        )
-        for plan in plans
-    ]
+    return copilot.list_plans()
 
 
 @router.get("/workflow/plans/{workflow_id}", response_model=StoredWorkflowPlan)

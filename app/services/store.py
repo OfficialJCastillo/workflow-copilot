@@ -7,6 +7,9 @@ from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowStep
 
 
+STEP_STATUSES = ("pending", "in_progress", "completed", "blocked")
+
+
 class WorkflowStore:
     def __init__(self, database_path: str = "data/workflow_copilot.db") -> None:
         self.database_path = Path(database_path)
@@ -89,23 +92,30 @@ class WorkflowStore:
         with sqlite3.connect(self.database_path) as connection:
             rows = connection.execute(
                 """
-                SELECT workflow_id, workflow_type, summary, urgency, request_text, created_at, updated_at
+                SELECT workflow_id, workflow_type, summary, urgency, request_text, steps_json, created_at, updated_at
                 FROM workflow_plans
                 ORDER BY updated_at DESC, created_at DESC
                 """
             ).fetchall()
-        return [
-            WorkflowPlanListItem(
-                workflow_id=row[0],
-                workflow_type=row[1],
-                summary=row[2],
-                urgency=row[3],
-                request_text=row[4],
-                created_at=row[5],
-                updated_at=row[6],
+        list_items = []
+        for row in rows:
+            steps = [WorkflowStep(**step) for step in json.loads(row[5])]
+            step_status_counts = self._step_status_counts(steps)
+            list_items.append(
+                WorkflowPlanListItem(
+                    workflow_id=row[0],
+                    workflow_type=row[1],
+                    summary=row[2],
+                    urgency=row[3],
+                    request_text=row[4],
+                    step_status_counts=step_status_counts,
+                    completed_step_count=step_status_counts["completed"],
+                    total_step_count=len(steps),
+                    created_at=row[6],
+                    updated_at=row[7],
+                )
             )
-            for row in rows
-        ]
+        return list_items
 
     def get_plan(self, workflow_id: str) -> StoredWorkflowPlan | None:
         with sqlite3.connect(self.database_path) as connection:
@@ -189,3 +199,9 @@ class WorkflowStore:
                 )
                 """
             )
+
+    def _step_status_counts(self, steps: list[WorkflowStep]) -> dict[str, int]:
+        counts = {status: 0 for status in STEP_STATUSES}
+        for step in steps:
+            counts[step.status] = counts.get(step.status, 0) + 1
+        return counts

@@ -5,6 +5,7 @@ import uuid
 
 from app.schemas.models import StoredWorkflowPlan
 from app.schemas.models import WorkflowPlanRequest
+from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowPlanResponse
 from app.schemas.models import WorkflowStep
 from app.services.store import WorkflowStore
@@ -72,11 +73,8 @@ class WorkflowCopilot:
             updated_at=timestamp,
         )
 
-    def list_plans(self) -> list[StoredWorkflowPlan]:
-        store = self._store()
-        summaries = store.list_plans()
-        plans = [store.get_plan(item.workflow_id) for item in summaries]
-        return [plan for plan in plans if plan is not None]
+    def list_plans(self) -> list[WorkflowPlanListItem]:
+        return self._store().list_plans()
 
     def get_plan(self, workflow_id: str) -> StoredWorkflowPlan | None:
         return self._store().get_plan(workflow_id)

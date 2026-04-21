@@ -317,6 +317,25 @@ def render_demo_ui() -> HTMLResponse:
       font-size: 0.83rem;
     }
 
+    .saved-item-progress {
+      margin-top: 10px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(15, 118, 110, 0.12);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(135deg, #0f766e 0%, #155e75 100%);
+    }
+
     .hint {
       margin: 0;
       color: var(--warn);
@@ -440,6 +459,40 @@ def render_demo_ui() -> HTMLResponse:
       return `<${tag}>${items.join("")}</${tag}>`;
     }
 
+    function formatTimestamp(value) {
+      if (!value) {
+        return null;
+      }
+
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return value;
+      }
+
+      return parsed.toLocaleString([], {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    }
+
+    function renderProgress(item) {
+      const total = item.total_step_count || 0;
+      const completed = item.completed_step_count || 0;
+      const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+      return `
+        <div class="saved-item-progress" aria-label="Progress ${completed} of ${total} steps completed">
+          <div class="saved-item-meta">
+            <span>Progress: ${completed}/${total} steps complete</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${percent}%"></div>
+          </div>
+        </div>
+      `;
+    }
+
     function renderResponse(data, sourceLabel = "live preview") {
       const steps = data.steps.map(
         (step) => `
@@ -458,6 +511,8 @@ def render_demo_ui() -> HTMLResponse:
       const missingInputs = data.missing_inputs.map((item) => `<li>${escapeHtml(item)}</li>`);
       const followUps = data.follow_up_questions.map((question) => `<li>${escapeHtml(question)}</li>`);
       const successChecks = data.success_checks.map((item) => `<li>${escapeHtml(item)}</li>`);
+      const createdAt = formatTimestamp(data.created_at);
+      const updatedAt = formatTimestamp(data.updated_at);
 
       resultsRoot.className = "result-grid";
       resultsRoot.innerHTML = `
@@ -466,6 +521,8 @@ def render_demo_ui() -> HTMLResponse:
             <span class="badge">Workflow type: ${escapeHtml(data.workflow_type.replaceAll("_", " "))}</span>
             <span class="badge">Urgency: ${escapeHtml(data.urgency)}</span>
             <span class="badge">Source: ${escapeHtml(sourceLabel)}</span>
+            ${createdAt ? `<span class="badge">Created: ${escapeHtml(createdAt)}</span>` : ""}
+            ${updatedAt ? `<span class="badge">Updated: ${escapeHtml(updatedAt)}</span>` : ""}
           </div>
           <p>${escapeHtml(data.summary)}</p>
         </section>
@@ -506,16 +563,25 @@ def render_demo_ui() -> HTMLResponse:
       savedPlansRoot.className = "saved-list";
       savedPlansRoot.innerHTML = items
         .slice(0, 6)
-        .map((item) => `
-          <button type="button" class="saved-item ${item.workflow_id === activeSavedWorkflowId ? "active" : ""}" data-workflow-id="${escapeHtml(item.workflow_id)}">
-            <div class="saved-item-title">${escapeHtml(item.summary)}</div>
-            <div class="saved-item-meta">
-              <span>${escapeHtml(item.workflow_type.replaceAll("_", " "))}</span>
-              <span>${escapeHtml(item.urgency)}</span>
-              <span>${escapeHtml(item.workflow_id)}</span>
-            </div>
-          </button>
-        `)
+        .map((item) => {
+          const createdAt = formatTimestamp(item.created_at);
+          const updatedAt = formatTimestamp(item.updated_at);
+          return `
+            <button type="button" class="saved-item ${item.workflow_id === activeSavedWorkflowId ? "active" : ""}" data-workflow-id="${escapeHtml(item.workflow_id)}">
+              <div class="saved-item-title">${escapeHtml(item.summary)}</div>
+              <div class="saved-item-meta">
+                <span>${escapeHtml(item.workflow_type.replaceAll("_", " "))}</span>
+                <span>${escapeHtml(item.urgency)}</span>
+                <span>${escapeHtml(item.workflow_id)}</span>
+              </div>
+              ${renderProgress(item)}
+              <div class="saved-item-meta">
+                ${createdAt ? `<span>Created ${escapeHtml(createdAt)}</span>` : ""}
+                ${updatedAt ? `<span>Updated ${escapeHtml(updatedAt)}</span>` : ""}
+              </div>
+            </button>
+          `;
+        })
         .join("");
 
       savedPlansRoot.querySelectorAll("[data-workflow-id]").forEach((button) => {

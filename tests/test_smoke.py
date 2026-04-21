@@ -83,6 +83,9 @@ def test_persisted_plan_can_be_retrieved_and_updated(tmp_path: Path) -> None:
     listed = copilot.list_plans()
     assert len(listed) == 1
     assert listed[0].workflow_id == created.workflow_id
+    assert listed[0].total_step_count == len(created.steps)
+    assert listed[0].completed_step_count == 0
+    assert listed[0].step_status_counts["pending"] == len(created.steps)
 
     fetched = copilot.get_plan(created.workflow_id)
     assert fetched is not None
@@ -95,3 +98,9 @@ def test_persisted_plan_can_be_retrieved_and_updated(tmp_path: Path) -> None:
     refetched = copilot.get_plan(created.workflow_id)
     assert refetched is not None
     assert refetched.steps[0].status == "completed"
+
+    relisted = copilot.list_plans()
+    assert relisted[0].workflow_id == created.workflow_id
+    assert relisted[0].completed_step_count == 1
+    assert relisted[0].total_step_count == len(created.steps)
+    assert relisted[0].step_status_counts["completed"] == 1
