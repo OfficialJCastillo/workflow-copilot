@@ -37,7 +37,7 @@ def render_demo_ui() -> HTMLResponse:
     }
 
     .page {
-      max-width: 1100px;
+      max-width: 1180px;
       margin: 0 auto;
       padding: 48px 20px 64px;
     }
@@ -66,7 +66,7 @@ def render_demo_ui() -> HTMLResponse:
 
     .subtitle {
       margin: 0;
-      max-width: 60ch;
+      max-width: 66ch;
       font-size: 1.08rem;
       line-height: 1.5;
       color: var(--muted);
@@ -75,7 +75,7 @@ def render_demo_ui() -> HTMLResponse:
     .layout {
       display: grid;
       gap: 20px;
-      grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+      grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
       align-items: start;
     }
 
@@ -88,13 +88,21 @@ def render_demo_ui() -> HTMLResponse:
       backdrop-filter: blur(10px);
     }
 
-    .panel-body {
+    .panel-body,
+    .result-header,
+    .saved-header {
       padding: 24px;
       display: grid;
+      gap: 14px;
+    }
+
+    .panel-body {
       gap: 18px;
     }
 
-    .form-copy {
+    .form-copy,
+    .result-copy,
+    .saved-copy {
       margin: 0;
       color: var(--muted);
       line-height: 1.45;
@@ -126,6 +134,12 @@ def render_demo_ui() -> HTMLResponse:
       line-height: 1.45;
     }
 
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
     button {
       appearance: none;
       border: 0;
@@ -141,6 +155,13 @@ def render_demo_ui() -> HTMLResponse:
       box-shadow: 0 16px 30px rgba(21, 94, 117, 0.18);
     }
 
+    button.secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
     button:hover { transform: translateY(-1px); }
     button:disabled { opacity: 0.65; cursor: wait; transform: none; }
 
@@ -153,21 +174,14 @@ def render_demo_ui() -> HTMLResponse:
 
     .status.error { color: #9f1239; }
 
-    .result-header {
-      padding: 24px 24px 0;
-      display: grid;
-      gap: 10px;
+    .section-divider {
+      border-top: 1px solid var(--border);
     }
 
-    .result-header h2 {
+    .result-header h2,
+    .saved-header h2 {
       margin: 0;
       font-size: 1.55rem;
-    }
-
-    .result-copy {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.45;
     }
 
     .badges {
@@ -218,7 +232,8 @@ def render_demo_ui() -> HTMLResponse:
       color: var(--muted);
     }
 
-    .placeholder {
+    .placeholder,
+    .saved-empty {
       padding: 24px;
       color: var(--muted);
       line-height: 1.55;
@@ -259,6 +274,49 @@ def render_demo_ui() -> HTMLResponse:
       background: rgba(15, 118, 110, 0.1);
     }
 
+    .saved-list {
+      display: grid;
+      gap: 12px;
+      padding: 0 24px 24px;
+    }
+
+    .saved-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.55);
+      color: var(--text);
+      box-shadow: none;
+    }
+
+    .saved-item.active {
+      border-color: #9fcfc8;
+      background: rgba(215, 241, 236, 0.55);
+    }
+
+    .saved-item:hover {
+      transform: none;
+      border-color: #b8b0a1;
+    }
+
+    .saved-item-title {
+      margin: 0 0 6px;
+      font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .saved-item-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+      font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+      font-size: 0.83rem;
+    }
+
     .hint {
       margin: 0;
       color: var(--warn);
@@ -281,7 +339,7 @@ def render_demo_ui() -> HTMLResponse:
       <h1>workflow-copilot demo UI</h1>
       <p class="subtitle">
         Try the deterministic planning engine in one screen. Paste an operational request, add the requester role and team,
-        and inspect the returned workflow type, ordered steps, risks, missing inputs, and follow-up questions.
+        preview the generated workflow, and optionally save the plan so recent work stays visible in the demo.
       </p>
     </section>
 
@@ -289,12 +347,13 @@ def render_demo_ui() -> HTMLResponse:
       <form class="panel" id="plan-form">
         <div class="panel-body">
           <p class="form-copy">
-            This demo previews the existing <code>POST /workflow/plan</code> response. It does not save plans or update step state.
+            This demo uses the existing planning and persistence endpoints. You can preview a plan from
+            <code>POST /workflow/plan</code> or save it through <code>POST /workflow/plans</code>.
           </p>
 
           <label>
             Task request
-            <textarea id="request-text" name="request_text" required>Prepare a minor release for a customer-facing API next Thursday.</textarea>
+            <textarea id="request-text" name="request_text" required>Prepare a customer-facing API release ASAP for next quarter and confirm who signs off.</textarea>
           </label>
 
           <label>
@@ -307,7 +366,10 @@ def render_demo_ui() -> HTMLResponse:
             <input id="team-name" name="team_name" value="Platform" />
           </label>
 
-          <button type="submit" id="submit-button">Generate workflow plan</button>
+          <div class="button-row">
+            <button type="submit" id="submit-button">Generate workflow plan</button>
+            <button type="button" id="save-button" class="secondary">Save plan</button>
+          </div>
           <p class="status" id="status-text" aria-live="polite"></p>
         </div>
       </form>
@@ -324,6 +386,20 @@ def render_demo_ui() -> HTMLResponse:
             Submit a request to see steps, risks, missing inputs, follow-up questions, and success checks rendered here.
           </div>
         </div>
+
+        <div class="section-divider"></div>
+
+        <div class="saved-header">
+          <h2>Recent saved plans</h2>
+          <p class="saved-copy">
+            Save a plan to the local SQLite store, then reopen it here to make the persistence layer visible in the demo.
+          </p>
+        </div>
+        <div id="saved-plans-root" class="saved-empty">
+          <div class="empty-state">
+            No saved plans yet. Use the save button to create one from the current request.
+          </div>
+        </div>
       </section>
     </section>
   </main>
@@ -332,44 +408,66 @@ def render_demo_ui() -> HTMLResponse:
     const form = document.getElementById("plan-form");
     const statusText = document.getElementById("status-text");
     const submitButton = document.getElementById("submit-button");
+    const saveButton = document.getElementById("save-button");
     const resultsRoot = document.getElementById("results-root");
+    const savedPlansRoot = document.getElementById("saved-plans-root");
 
-    function renderList(items, ordered = false, className = "") {
+    let activeSavedWorkflowId = null;
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function buildPayload() {
+      return {
+        request_text: document.getElementById("request-text").value,
+        requester_role: document.getElementById("requester-role").value || "requester",
+        team_name: document.getElementById("team-name").value || null,
+      };
+    }
+
+    function renderList(items, ordered = false) {
       if (!items || items.length === 0) {
         return '<p class="hint">No items returned for this section.</p>';
       }
 
       const tag = ordered ? "ol" : "ul";
-      return `<${tag} class="${className}">${items.join("")}</${tag}>`;
+      return `<${tag}>${items.join("")}</${tag}>`;
     }
 
-    function renderResponse(data) {
+    function renderResponse(data, sourceLabel = "live preview") {
       const steps = data.steps.map(
         (step) => `
           <li>
-            <strong>${step.title}</strong>
+            <strong>${escapeHtml(step.title)}</strong>
             <div class="step-meta">
-              <span class="step-chip">Owner: ${step.owner}</span>
-              <span class="step-chip">Status: ${step.status}</span>
+              <span class="step-chip">Owner: ${escapeHtml(step.owner)}</span>
+              <span class="step-chip">Status: ${escapeHtml(step.status)}</span>
             </div>
-            <div>${step.rationale}</div>
+            <div>${escapeHtml(step.rationale)}</div>
           </li>
         `
       );
 
-      const risks = data.risks.map((risk) => `<li>${risk}</li>`);
-      const missingInputs = data.missing_inputs.map((item) => `<li>${item}</li>`);
-      const followUps = data.follow_up_questions.map((question) => `<li>${question}</li>`);
-      const successChecks = data.success_checks.map((item) => `<li>${item}</li>`);
+      const risks = data.risks.map((risk) => `<li>${escapeHtml(risk)}</li>`);
+      const missingInputs = data.missing_inputs.map((item) => `<li>${escapeHtml(item)}</li>`);
+      const followUps = data.follow_up_questions.map((question) => `<li>${escapeHtml(question)}</li>`);
+      const successChecks = data.success_checks.map((item) => `<li>${escapeHtml(item)}</li>`);
 
       resultsRoot.className = "result-grid";
       resultsRoot.innerHTML = `
         <section class="card full">
           <div class="badges">
-            <span class="badge">Workflow type: ${data.workflow_type.replaceAll("_", " ")}</span>
-            <span class="badge">Urgency: ${data.urgency}</span>
+            <span class="badge">Workflow type: ${escapeHtml(data.workflow_type.replaceAll("_", " "))}</span>
+            <span class="badge">Urgency: ${escapeHtml(data.urgency)}</span>
+            <span class="badge">Source: ${escapeHtml(sourceLabel)}</span>
           </div>
-          <p>${data.summary}</p>
+          <p>${escapeHtml(data.summary)}</p>
         </section>
         <section class="card full">
           <h3>Ordered steps</h3>
@@ -394,21 +492,73 @@ def render_demo_ui() -> HTMLResponse:
       `;
     }
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+    function renderSavedPlans(items) {
+      if (!items || items.length === 0) {
+        savedPlansRoot.className = "saved-empty";
+        savedPlansRoot.innerHTML = `
+          <div class="empty-state">
+            No saved plans yet. Use the save button to create one from the current request.
+          </div>
+        `;
+        return;
+      }
 
-      const payload = {
-        request_text: document.getElementById("request-text").value,
-        requester_role: document.getElementById("requester-role").value || "requester",
-        team_name: document.getElementById("team-name").value || null,
-      };
+      savedPlansRoot.className = "saved-list";
+      savedPlansRoot.innerHTML = items
+        .slice(0, 6)
+        .map((item) => `
+          <button type="button" class="saved-item ${item.workflow_id === activeSavedWorkflowId ? "active" : ""}" data-workflow-id="${escapeHtml(item.workflow_id)}">
+            <div class="saved-item-title">${escapeHtml(item.summary)}</div>
+            <div class="saved-item-meta">
+              <span>${escapeHtml(item.workflow_type.replaceAll("_", " "))}</span>
+              <span>${escapeHtml(item.urgency)}</span>
+              <span>${escapeHtml(item.workflow_id)}</span>
+            </div>
+          </button>
+        `)
+        .join("");
 
-      statusText.textContent = "Generating plan preview...";
+      savedPlansRoot.querySelectorAll("[data-workflow-id]").forEach((button) => {
+        button.addEventListener("click", () => loadSavedPlan(button.dataset.workflowId));
+      });
+    }
+
+    async function loadSavedPlans() {
+      const response = await fetch("/workflow/plans");
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("Unable to load saved plans.");
+      }
+      renderSavedPlans(data);
+    }
+
+    async function loadSavedPlan(workflowId) {
+      statusText.textContent = "Loading saved plan...";
+      statusText.className = "status";
+
+      const response = await fetch(`/workflow/plans/${workflowId}`);
+      const data = await response.json();
+      if (!response.ok) {
+        const detail = typeof data.detail === "string" ? data.detail : "Unable to load saved workflow plan.";
+        throw new Error(detail);
+      }
+
+      activeSavedWorkflowId = data.workflow_id;
+      renderResponse(data, `saved plan ${data.workflow_id}`);
+      await loadSavedPlans();
+      statusText.textContent = `Loaded saved plan ${data.workflow_id}.`;
+    }
+
+    async function submitPlan(savePlan = false) {
+      const payload = buildPayload();
+      statusText.textContent = savePlan ? "Saving workflow plan..." : "Generating plan preview...";
       statusText.className = "status";
       submitButton.disabled = true;
+      saveButton.disabled = true;
 
       try {
-        const response = await fetch("/workflow/plan", {
+        const endpoint = savePlan ? "/workflow/plans" : "/workflow/plan";
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -420,8 +570,17 @@ def render_demo_ui() -> HTMLResponse:
           throw new Error(detail);
         }
 
-        renderResponse(data);
-        statusText.textContent = "Plan generated from the live API response.";
+        if (savePlan) {
+          activeSavedWorkflowId = data.workflow_id;
+          renderResponse(data, `saved plan ${data.workflow_id}`);
+          await loadSavedPlans();
+          statusText.textContent = `Plan saved as ${data.workflow_id}.`;
+        } else {
+          activeSavedWorkflowId = null;
+          renderResponse(data, "live preview");
+          await loadSavedPlans();
+          statusText.textContent = "Plan generated from the live API response.";
+        }
       } catch (error) {
         resultsRoot.className = "placeholder";
         resultsRoot.innerHTML = `
@@ -434,7 +593,27 @@ def render_demo_ui() -> HTMLResponse:
         statusText.className = "status error";
       } finally {
         submitButton.disabled = false;
+        saveButton.disabled = false;
       }
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      await submitPlan(false);
+    });
+
+    saveButton.addEventListener("click", async () => {
+      await submitPlan(true);
+    });
+
+    loadSavedPlans().catch((error) => {
+      savedPlansRoot.className = "saved-empty";
+      savedPlansRoot.innerHTML = `
+        <div class="empty-state">
+          <strong>Unable to load saved plans.</strong>
+          <p class="hint">${escapeHtml(error.message)}</p>
+        </div>
+      `;
     });
   </script>
 </body>

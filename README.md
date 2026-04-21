@@ -30,8 +30,8 @@ Tiny browser demo preview:
 - SQLite-backed workflow persistence for saved plans and step updates
 - Workflow categories for onboarding, incident response, release prep, vendor approval, and recurring operations
 - Structured response schema with steps, blockers, risks, and follow-up questions
-- Simple urgency and risk heuristics
-- Tiny demo UI for previewing live plan responses at `GET /`
+- Request-aware urgency, summary, risk, and missing-input heuristics for edge cases like vague asks and conflicting timelines
+- Tiny demo UI for previewing and saving live plan responses at `GET /`
 - Smoke tests for the API-facing pipeline
 
 ## Architecture
@@ -54,7 +54,8 @@ workflow-copilot/
 2. Open the browser demo or call the API directly.
 3. The service classifies the request into a workflow type.
 4. It returns an ordered plan with owners, dependencies, risks, and success checks.
-5. A caller can render the plan in a UI, ticketing flow, or internal tool.
+5. You can optionally save the plan to SQLite and reopen it from the demo.
+6. A caller can render the plan in a UI, ticketing flow, or internal tool.
 
 ## How To Run
 
@@ -88,9 +89,11 @@ The root page provides a lightweight one-screen flow to:
 - enter an operational request
 - set requester role and team name
 - preview the live structured plan response from `POST /workflow/plan`
+- save the current request through `POST /workflow/plans`
+- reopen recent saved plans from the local SQLite store
 - inspect steps, risks, missing inputs, follow-up questions, and success checks without using a separate API client
 
-## Example Response
+## Example Saved Plan Response
 
 ```json
 {
@@ -119,7 +122,7 @@ The root page provides a lightweight one-screen flow to:
 - The service is intentionally deterministic so the output is inspectable and stable.
 - The workflow categories are implemented as lightweight templates plus request-specific heuristics.
 - SQLite persistence makes the scaffold usable for saved workflows, step tracking, and simple product demos even before adding an LLM-backed planning layer.
-- The tiny browser demo is intentionally read-only and previews the existing planning response without creating or mutating saved plans.
+- The tiny browser demo now previews plans live, saves them into the local SQLite store, and reloads recent plans without adding a separate frontend stack.
 
 ## GitHub Setup Notes
 

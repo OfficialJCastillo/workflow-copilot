@@ -27,7 +27,7 @@ class WorkflowCopilot:
     def build_plan(self, request: WorkflowPlanRequest) -> WorkflowPlanResponse:
         workflow_type = self._detect_workflow_type(request.request_text)
         template = self._template_for(workflow_type)
-        urgency = self._detect_urgency(request.request_text)
+        urgency = self._detect_urgency(request.request_text, workflow_type)
         owner = request.requester_role
         team_name = request.team_name or "the team"
 
@@ -43,11 +43,11 @@ class WorkflowCopilot:
 
         return WorkflowPlanResponse(
             workflow_type=template.workflow_type,
-            summary=template.summary,
+            summary=self._build_summary(template.summary, workflow_type, request.request_text, team_name),
             urgency=urgency,
             steps=steps,
-            risks=self._expand_risks(template.risks, request.request_text),
-            missing_inputs=self._expand_missing_inputs(template.missing_inputs, request.request_text),
+            risks=self._expand_risks(template.risks, request.request_text, workflow_type),
+            missing_inputs=self._expand_missing_inputs(template.missing_inputs, request.request_text, workflow_type),
             follow_up_questions=self._follow_up_questions(workflow_type, request.request_text),
             success_checks=template.success_checks,
         )
@@ -96,21 +96,97 @@ class WorkflowCopilot:
 
     def _detect_workflow_type(self, request_text: str) -> str:
         text = request_text.lower()
-        if any(token in text for token in ["incident", "outage", "sev", "rollback"]):
-            return "incident_response"
-        if any(token in text for token in ["release", "launch", "deploy", "cutover"]):
-            return "release_preparation"
-        if any(token in text for token in ["vendor", "procurement", "purchase", "tooling"]):
-            return "vendor_approval"
-        if any(token in text for token in ["onboard", "new hire", "access", "training"]):
-            return "onboarding"
-        return "recurring_operations"
+        scores = {
+            "incident_response": 0,
+            "release_preparation": 0,
+            "vendor_approval": 0,
+            "onboarding": 0,
+            "recurring_operations": 0,
+        }
+        weighted_phrases = {
+            "incident_response": {
+                "incident": 4,
+                "outage": 5,
+                "sev": 4,
+                "rollback": 4,
+                "degraded": 3,
+                "mitigation": 2,
+                "production issue": 4,
+            },
+            "release_preparation": {
+                "release": 4,
+                "launch": 4,
+                "deploy": 3,
+                "cutover": 4,
+                "go live": 4,
+                "hotfix": 3,
+                "change freeze": 3,
+            },
+            "vendor_approval": {
+                "vendor": 4,
+                "procurement": 4,
+                "purchase": 3,
+                "contract": 4,
+                "renewal": 3,
+                "license": 3,
+                "security review": 2,
+            },
+            "onboarding": {
+                "onboard": 4,
+                "new hire": 4,
+                "training": 2,
+                "orientation": 3,
+                "week one": 2,
+                "contractor": 2,
+                "access": 2,
+            },
+            "recurring_operations": {
+                "recurring": 4,
+                "weekly": 3,
+                "monthly": 3,
+                "quarterly": 3,
+                "cadence": 3,
+                "runbook": 3,
+                "checklist": 2,
+                "rotation": 2,
+                "report": 2,
+            },
+        }
+        for workflow_type, phrases in weighted_phrases.items():
+            for phrase, weight in phrases.items():
+                if phrase in text:
+                    scores[workflow_type] += weight
 
-    def _detect_urgency(self, request_text: str) -> str:
+        ranked = sorted(
+            scores.items(),
+            key=lambda item: (item[1], self._workflow_rank(item[0])),
+            reverse=True,
+        )
+        if ranked[0][1] == 0:
+            return "recurring_operations"
+        return ranked[0][0]
+
+    def _detect_urgency(self, request_text: str, workflow_type: str) -> str:
         text = request_text.lower()
-        if any(token in text for token in ["today", "urgent", "asap", "immediately", "outage"]):
+        high_tokens = ["today", "urgent", "asap", "immediately", "outage", "critical", "sev1", "p1", "blocked"]
+        medium_tokens = [
+            "this week",
+            "next week",
+            "soon",
+            "thursday",
+            "friday",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "end of week",
+        ]
+        if workflow_type == "incident_response":
             return "high"
-        if any(token in text for token in ["this week", "next week", "soon", "thursday", "friday"]):
+        if any(token in text for token in high_tokens):
+            return "high"
+        if workflow_type == "release_preparation" and "customer" in text:
+            return "high"
+        if any(token in text for token in medium_tokens):
             return "medium"
         return "normal"
 
@@ -239,38 +315,137 @@ class WorkflowCopilot:
         }
         return templates[workflow_type]
 
+    def _build_summary(self, base_summary: str, workflow_type: str, request_text: str, team_name: str) -> str:
+        text = request_text.lower()
+        if workflow_type == "release_preparation" and "customer" in text:
+            return "Plan a customer-facing release with approvals, validation, rollback readiness, and stakeholder coverage."
+        if workflow_type == "vendor_approval" and any(token in text for token in ["data", "regulated", "security"]):
+            return "Validate business need, procurement path, and data/security review before committing to a vendor."
+        if workflow_type == "onboarding" and "remote" in text:
+            return "Coordinate access, training, and remote setup so onboarding lands cleanly in the first week."
+        if workflow_type == "recurring_operations" and any(token in text for token in ["weekly", "monthly", "quarterly", "cadence"]):
+            return f"Turn {team_name}'s recurring request into a repeatable checklist with owners, cadence, and review points."
+        return base_summary
+
     def _build_rationale(self, step_title: str, workflow_type: str) -> str:
+        title = step_title.lower()
+        if "assign" in title or "owner" in title:
+            return f"This makes accountability explicit before the {workflow_type} workflow expands."
+        if "confirm" in title or "document" in title:
+            return "This locks down scope and reduces rework caused by assumptions."
+        if "rollback" in title or "mitigation" in title:
+            return "This protects the team if the primary execution path fails."
+        if "schedule" in title or "set" in title:
+            return "This creates predictable coordination points so the workflow does not drift."
+        if "review" in title or "validation" in title:
+            return "This reduces the chance of silent errors reaching stakeholders."
         return f"This step reduces ambiguity early in the {workflow_type} workflow."
 
-    def _expand_risks(self, base_risks: list[str], request_text: str) -> list[str]:
+    def _expand_risks(self, base_risks: list[str], request_text: str, workflow_type: str) -> list[str]:
         risks = list(base_risks)
         text = request_text.lower()
         if "customer" in text:
             risks.append("Customer impact raises the cost of unclear coordination.")
         if "api" in text or "access" in text:
             risks.append("System access or integration dependencies may delay execution.")
-        return risks
+        if self._has_conflicting_timeline(text):
+            risks.append("Urgency cues conflict with the stated timeline, so the team may optimize for the wrong date.")
+        if self._is_vague_request(text):
+            risks.append("The request is underspecified and may create avoidable rework.")
+        if workflow_type == "vendor_approval" and any(token in text for token in ["data", "regulated", "security"]):
+            risks.append("Vendor review may stall until data handling expectations are explicit.")
+        if workflow_type == "onboarding" and any(token in text for token in ["remote", "contractor"]):
+            risks.append("Distributed onboarding increases coordination risk around access and scheduling.")
+        return self._dedupe(risks)
 
-    def _expand_missing_inputs(self, base_missing_inputs: list[str], request_text: str) -> list[str]:
+    def _expand_missing_inputs(self, base_missing_inputs: list[str], request_text: str, workflow_type: str) -> list[str]:
         missing_inputs = list(base_missing_inputs)
         text = request_text.lower()
-        if not any(token in text for token in ["monday", "tuesday", "wednesday", "thursday", "friday", "date"]):
+        if self._is_vague_request(text):
+            missing_inputs.append("Concrete deliverable or decision being requested.")
+        if not any(
+            token in text
+            for token in [
+                "monday",
+                "tuesday",
+                "wednesday",
+                "thursday",
+                "friday",
+                "date",
+                "week",
+                "month",
+                "quarter",
+            ]
+        ):
             missing_inputs.append("Target date or execution window.")
-        return missing_inputs
+        if workflow_type == "release_preparation" and not any(token in text for token in ["rollback", "backout", "fallback"]):
+            missing_inputs.append("Rollback trigger or fallback plan.")
+        if workflow_type == "vendor_approval" and not any(token in text for token in ["budget", "spend", "cost"]):
+            missing_inputs.append("Budget owner or expected spend range.")
+        if workflow_type == "recurring_operations" and not any(
+            token in text for token in ["daily", "weekly", "monthly", "quarterly", "cadence", "every"]
+        ):
+            missing_inputs.append("Recurring cadence or schedule.")
+        if workflow_type == "onboarding" and "remote" in text and not any(
+            token in text for token in ["timezone", "time zone", "location", "country"]
+        ):
+            missing_inputs.append("Work location or time zone.")
+        return self._dedupe(missing_inputs)
 
     def _follow_up_questions(self, workflow_type: str, request_text: str) -> list[str]:
+        text = request_text.lower()
         questions = ["Who owns final approval for this workflow?"]
+        if self._has_conflicting_timeline(text):
+            questions.append("The request sounds urgent and scheduled later. Which date should the team optimize for?")
+        if self._is_vague_request(text):
+            questions.append("What exact deliverable, decision, or outcome should count as done?")
         if workflow_type == "incident_response":
             questions.append("What service or customer segment is affected right now?")
         elif workflow_type == "release_preparation":
             questions.append("What is the rollback trigger if validation fails?")
+            if not any(token in text for token in ["approver", "approval", "sign off", "signoff"]):
+                questions.append("Who signs off on the release once validation passes?")
         elif workflow_type == "vendor_approval":
             questions.append("Will the vendor handle sensitive or customer data?")
+            if not any(token in text for token in ["budget", "spend", "cost"]):
+                questions.append("What budget owner or spend range should procurement use?")
+        elif workflow_type == "onboarding":
+            questions.append("What should the new teammate be able to complete by the end of week one?")
+            if "remote" in text:
+                questions.append("Which remote setup tasks must be finished before the first working session?")
         else:
             questions.append("What is the exact deadline or target milestone?")
         if "team" not in request_text.lower():
             questions.append("Which team is responsible for execution?")
-        return questions
+        return self._dedupe(questions)
 
     def _timestamp(self) -> str:
         return datetime.now(UTC).replace(microsecond=0).isoformat()
+
+    def _workflow_rank(self, workflow_type: str) -> int:
+        order = {
+            "incident_response": 5,
+            "release_preparation": 4,
+            "vendor_approval": 3,
+            "onboarding": 2,
+            "recurring_operations": 1,
+        }
+        return order[workflow_type]
+
+    def _has_conflicting_timeline(self, text: str) -> bool:
+        urgent = any(token in text for token in ["asap", "urgent", "immediately", "today"])
+        distant = any(token in text for token in ["next month", "next quarter", "later", "eventually", "q1", "q2", "q3", "q4"])
+        return urgent and distant
+
+    def _is_vague_request(self, text: str) -> bool:
+        words = [word.strip(".,!?") for word in text.split() if word.strip(".,!?")]
+        return len(words) < 8 or ("need help" in text and len(words) < 12)
+
+    def _dedupe(self, items: list[str]) -> list[str]:
+        seen: set[str] = set()
+        ordered: list[str] = []
+        for item in items:
+            if item not in seen:
+                seen.add(item)
+                ordered.append(item)
+        return ordered

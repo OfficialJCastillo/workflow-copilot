@@ -14,7 +14,8 @@ def test_release_plan_smoke() -> None:
         )
     )
     assert response.workflow_type == "release_preparation"
-    assert response.urgency == "medium"
+    assert response.urgency == "high"
+    assert "customer-facing release" in response.summary.lower()
     assert response.steps
     assert any(step.owner == "release manager" for step in response.steps)
     assert any("rollback" in check.lower() for check in response.success_checks)
@@ -32,6 +33,40 @@ def test_incident_plan_smoke() -> None:
     assert response.urgency == "high"
     assert response.risks
     assert any("service" in question.lower() or "affected" in question.lower() for question in response.follow_up_questions)
+
+
+def test_vendor_plan_flags_conflicting_timeline_and_budget_gap() -> None:
+    response = WorkflowCopilot(store=WorkflowStore(database_path=":memory:")).build_plan(
+        WorkflowPlanRequest(
+            request_text="Urgent vendor security review needed ASAP for next quarter analytics contract.",
+            requester_role="operations_manager",
+            team_name="Operations",
+        )
+    )
+
+    assert response.workflow_type == "vendor_approval"
+    assert response.urgency == "high"
+    assert any("optimize for the wrong date" in risk.lower() for risk in response.risks)
+    assert any("budget owner or expected spend range" in item.lower() for item in response.missing_inputs)
+    assert any("which date should the team optimize for" in question.lower() for question in response.follow_up_questions)
+    assert any("budget owner or spend range" in question.lower() for question in response.follow_up_questions)
+
+
+def test_remote_onboarding_adds_location_and_setup_questions() -> None:
+    response = WorkflowCopilot(store=WorkflowStore(database_path=":memory:")).build_plan(
+        WorkflowPlanRequest(
+            request_text="Prepare remote onboarding for a new hire joining next Monday.",
+            requester_role="people_ops_manager",
+            team_name="People Operations",
+        )
+    )
+
+    assert response.workflow_type == "onboarding"
+    assert "remote setup" in response.summary.lower()
+    assert any("work location or time zone" in item.lower() for item in response.missing_inputs)
+    assert any("distributed onboarding" in risk.lower() for risk in response.risks)
+    assert any("week one" in question.lower() for question in response.follow_up_questions)
+    assert any("remote setup tasks" in question.lower() for question in response.follow_up_questions)
 
 
 def test_persisted_plan_can_be_retrieved_and_updated(tmp_path: Path) -> None:
