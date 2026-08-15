@@ -1,20 +1,58 @@
-from pathlib import Path
-import json
-import sqlite3
+import os
+import uuid
+
+from sqlalchemy import Engine
+from sqlalchemy import func
+from sqlalchemy import insert
+from sqlalchemy import select
+from sqlalchemy import update
 
 from app.schemas.models import StoredWorkflowPlan
+from app.schemas.models import WorkflowAuditEvent
 from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowStep
+from app.services.database import create_database_engine
+from app.services.database import database_url_from_path
+from app.services.database import metadata
+from app.services.database import workflow_audit_events
+from app.services.database import workflow_plans
 
 
 STEP_STATUSES = ("pending", "in_progress", "completed", "blocked")
 
 
+class InvalidApprovalTransition(ValueError):
+    pass
+
+
 class WorkflowStore:
-    def __init__(self, database_path: str = "data/workflow_copilot.db") -> None:
-        self.database_path = Path(database_path)
-        self.database_path.parent.mkdir(parents=True, exist_ok=True)
-        self._initialize()
+    def __init__(
+        self,
+        database_path: str | None = None,
+        database_url: str | None = None,
+        engine: Engine | None = None,
+        initialize_schema: bool | None = None,
+    ) -> None:
+        if database_path is not None and database_url is not None:
+            raise ValueError("Provide either database_path or database_url, not both.")
+
+        resolved_url = database_url
+        if database_path is not None:
+            resolved_url = database_url_from_path(database_path)
+        self.engine = engine or create_database_engine(resolved_url)
+
+        if initialize_schema is None:
+            initialize_schema = os.getenv("WORKFLOW_AUTO_CREATE_SCHEMA", "1") == "1"
+        if initialize_schema:
+            metadata.create_all(self.engine)
+
+    @property
+    def database_backend(self) -> str:
+        return self.engine.dialect.name
+
+    def check_connection(self) -> None:
+        with self.engine.connect() as connection:
+            connection.execute(select(1)).scalar_one()
 
     def save_plan(
         self,
@@ -41,114 +79,83 @@ class WorkflowStore:
             "workflow_type": workflow_type,
             "summary": summary,
             "urgency": urgency,
-            "steps": [step.model_dump() for step in steps],
-            "risks": risks,
-            "missing_inputs": missing_inputs,
-            "follow_up_questions": follow_up_questions,
-            "success_checks": success_checks,
+            "steps_json": [step.model_dump() for step in steps],
+            "risks_json": risks,
+            "missing_inputs_json": missing_inputs,
+            "follow_up_questions_json": follow_up_questions,
+            "success_checks_json": success_checks,
             "created_at": created_at,
             "updated_at": updated_at,
+            "approval_status": "draft",
+            "decision_by": None,
+            "decision_note": None,
+            "decided_at": None,
         }
-        with sqlite3.connect(self.database_path) as connection:
-            connection.execute(
-                """
-                INSERT INTO workflow_plans (
-                    workflow_id,
-                    request_text,
-                    requester_role,
-                    team_name,
-                    workflow_type,
-                    summary,
-                    urgency,
-                    steps_json,
-                    risks_json,
-                    missing_inputs_json,
-                    follow_up_questions_json,
-                    success_checks_json,
-                    created_at,
-                    updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    payload["workflow_id"],
-                    payload["request_text"],
-                    payload["requester_role"],
-                    payload["team_name"],
-                    payload["workflow_type"],
-                    payload["summary"],
-                    payload["urgency"],
-                    json.dumps(payload["steps"]),
-                    json.dumps(payload["risks"]),
-                    json.dumps(payload["missing_inputs"]),
-                    json.dumps(payload["follow_up_questions"]),
-                    json.dumps(payload["success_checks"]),
-                    payload["created_at"],
-                    payload["updated_at"],
-                ),
+        with self.engine.begin() as connection:
+            connection.execute(insert(workflow_plans).values(**payload))
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type="plan_created",
+                actor=requester_role,
+                details={"approval_status": "draft"},
+                created_at=created_at,
             )
-        return StoredWorkflowPlan(**payload)
+        return self._stored_plan(payload)
 
     def list_plans(self) -> list[WorkflowPlanListItem]:
-        with sqlite3.connect(self.database_path) as connection:
-            rows = connection.execute(
-                """
-                SELECT workflow_id, workflow_type, summary, urgency, request_text, steps_json, created_at, updated_at
-                FROM workflow_plans
-                ORDER BY updated_at DESC, created_at DESC
-                """
-            ).fetchall()
+        statement = select(
+            workflow_plans.c.workflow_id,
+            workflow_plans.c.workflow_type,
+            workflow_plans.c.summary,
+            workflow_plans.c.urgency,
+            workflow_plans.c.request_text,
+            workflow_plans.c.steps_json,
+            workflow_plans.c.approval_status,
+            workflow_plans.c.created_at,
+            workflow_plans.c.updated_at,
+        ).order_by(
+            workflow_plans.c.updated_at.desc(),
+            workflow_plans.c.created_at.desc(),
+        )
+        with self.engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+
         list_items = []
         for row in rows:
-            steps = [WorkflowStep(**step) for step in json.loads(row[5])]
+            steps = [WorkflowStep(**step) for step in row["steps_json"]]
             step_status_counts = self._step_status_counts(steps)
             list_items.append(
                 WorkflowPlanListItem(
-                    workflow_id=row[0],
-                    workflow_type=row[1],
-                    summary=row[2],
-                    urgency=row[3],
-                    request_text=row[4],
+                    workflow_id=row["workflow_id"],
+                    workflow_type=row["workflow_type"],
+                    summary=row["summary"],
+                    urgency=row["urgency"],
+                    request_text=row["request_text"],
                     step_status_counts=step_status_counts,
                     completed_step_count=step_status_counts["completed"],
                     total_step_count=len(steps),
-                    created_at=row[6],
-                    updated_at=row[7],
+                    approval_status=row["approval_status"],
+                    created_at=row["created_at"],
+                    updated_at=row["updated_at"],
                 )
             )
         return list_items
 
     def get_plan(self, workflow_id: str) -> StoredWorkflowPlan | None:
-        with sqlite3.connect(self.database_path) as connection:
-            row = connection.execute(
-                """
-                SELECT workflow_id, request_text, requester_role, team_name, workflow_type, summary, urgency,
-                       steps_json, risks_json, missing_inputs_json, follow_up_questions_json,
-                       success_checks_json, created_at, updated_at
-                FROM workflow_plans
-                WHERE workflow_id = ?
-                """,
-                (workflow_id,),
-            ).fetchone()
-        if row is None:
-            return None
-        return StoredWorkflowPlan(
-            workflow_id=row[0],
-            request_text=row[1],
-            requester_role=row[2],
-            team_name=row[3],
-            workflow_type=row[4],
-            summary=row[5],
-            urgency=row[6],
-            steps=[WorkflowStep(**step) for step in json.loads(row[7])],
-            risks=json.loads(row[8]),
-            missing_inputs=json.loads(row[9]),
-            follow_up_questions=json.loads(row[10]),
-            success_checks=json.loads(row[11]),
-            created_at=row[12],
-            updated_at=row[13],
-        )
+        statement = select(workflow_plans).where(workflow_plans.c.workflow_id == workflow_id)
+        with self.engine.connect() as connection:
+            row = connection.execute(statement).mappings().first()
+        return self._stored_plan(row) if row is not None else None
 
-    def update_step_status(self, workflow_id: str, step_id: str, status: str, updated_at: str) -> StoredWorkflowPlan | None:
+    def update_step_status(
+        self,
+        workflow_id: str,
+        step_id: str,
+        status: str,
+        actor: str,
+        updated_at: str,
+    ) -> StoredWorkflowPlan | None:
         plan = self.get_plan(workflow_id)
         if plan is None:
             return None
@@ -162,43 +169,190 @@ class WorkflowStore:
                 updated_steps.append(step)
         if not step_found:
             return None
-        with sqlite3.connect(self.database_path) as connection:
+
+        with self.engine.begin() as connection:
             connection.execute(
-                """
-                UPDATE workflow_plans
-                SET steps_json = ?, updated_at = ?
-                WHERE workflow_id = ?
-                """,
-                (
-                    json.dumps([step.model_dump() for step in updated_steps]),
-                    updated_at,
-                    workflow_id,
-                ),
+                update(workflow_plans)
+                .where(workflow_plans.c.workflow_id == workflow_id)
+                .values(
+                    steps_json=[step.model_dump() for step in updated_steps],
+                    updated_at=updated_at,
+                )
+            )
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type="step_status_updated",
+                actor=actor,
+                details={"step_id": step_id, "status": status},
+                created_at=updated_at,
             )
         return plan.model_copy(update={"steps": updated_steps, "updated_at": updated_at})
 
-    def _initialize(self) -> None:
-        with sqlite3.connect(self.database_path) as connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS workflow_plans (
-                    workflow_id TEXT PRIMARY KEY,
-                    request_text TEXT NOT NULL,
-                    requester_role TEXT NOT NULL,
-                    team_name TEXT,
-                    workflow_type TEXT NOT NULL,
-                    summary TEXT NOT NULL,
-                    urgency TEXT NOT NULL,
-                    steps_json TEXT NOT NULL,
-                    risks_json TEXT NOT NULL,
-                    missing_inputs_json TEXT NOT NULL,
-                    follow_up_questions_json TEXT NOT NULL,
-                    success_checks_json TEXT NOT NULL,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-                """
+    def submit_for_approval(self, workflow_id: str, actor: str, submitted_at: str) -> StoredWorkflowPlan | None:
+        plan = self.get_plan(workflow_id)
+        if plan is None:
+            return None
+        if plan.approval_status not in {"draft", "rejected"}:
+            raise InvalidApprovalTransition(
+                f"Cannot submit a plan with approval status '{plan.approval_status}'."
             )
+
+        with self.engine.begin() as connection:
+            result = connection.execute(
+                update(workflow_plans)
+                .where(
+                    workflow_plans.c.workflow_id == workflow_id,
+                    workflow_plans.c.approval_status == plan.approval_status,
+                )
+                .values(
+                    approval_status="pending_approval",
+                    decision_by=None,
+                    decision_note=None,
+                    decided_at=None,
+                    updated_at=submitted_at,
+                )
+            )
+            if result.rowcount != 1:
+                raise InvalidApprovalTransition(
+                    "Approval status changed while the plan was being submitted."
+                )
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type="approval_requested",
+                actor=actor,
+                details={
+                    "previous_status": plan.approval_status,
+                    "approval_status": "pending_approval",
+                },
+                created_at=submitted_at,
+            )
+
+        return self.get_plan(workflow_id)
+
+    def decide_plan(
+        self,
+        workflow_id: str,
+        decision: str,
+        actor: str,
+        note: str | None,
+        decided_at: str,
+    ) -> StoredWorkflowPlan | None:
+        if decision not in {"approved", "rejected"}:
+            raise InvalidApprovalTransition(f"Unsupported approval decision '{decision}'.")
+
+        plan = self.get_plan(workflow_id)
+        if plan is None:
+            return None
+        if plan.approval_status != "pending_approval":
+            raise InvalidApprovalTransition(
+                f"Cannot decide a plan with approval status '{plan.approval_status}'."
+            )
+
+        with self.engine.begin() as connection:
+            result = connection.execute(
+                update(workflow_plans)
+                .where(
+                    workflow_plans.c.workflow_id == workflow_id,
+                    workflow_plans.c.approval_status == "pending_approval",
+                )
+                .values(
+                    approval_status=decision,
+                    decision_by=actor,
+                    decision_note=note,
+                    decided_at=decided_at,
+                    updated_at=decided_at,
+                )
+            )
+            if result.rowcount != 1:
+                raise InvalidApprovalTransition(
+                    "Approval status changed while the decision was being recorded."
+                )
+            details = {"approval_status": decision}
+            if note:
+                details["note"] = note
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type=f"plan_{decision}",
+                actor=actor,
+                details=details,
+                created_at=decided_at,
+            )
+
+        return self.get_plan(workflow_id)
+
+    def list_audit_events(self, workflow_id: str) -> list[WorkflowAuditEvent] | None:
+        if self.get_plan(workflow_id) is None:
+            return None
+        statement = (
+            select(workflow_audit_events)
+            .where(workflow_audit_events.c.workflow_id == workflow_id)
+            .order_by(
+                workflow_audit_events.c.created_at.asc(),
+                workflow_audit_events.c.event_id.asc(),
+            )
+        )
+        with self.engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+        return [
+            WorkflowAuditEvent(
+                event_id=row["event_id"],
+                workflow_id=row["workflow_id"],
+                event_type=row["event_type"],
+                actor=row["actor"],
+                details=row["details_json"],
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]
+
+    def count_plans(self) -> int:
+        with self.engine.connect() as connection:
+            return connection.execute(select(func.count()).select_from(workflow_plans)).scalar_one()
+
+    def _record_audit_event(
+        self,
+        connection,
+        workflow_id: str,
+        event_type: str,
+        actor: str,
+        details: dict[str, str],
+        created_at: str,
+    ) -> None:
+        connection.execute(
+            insert(workflow_audit_events).values(
+                event_id=f"evt-{uuid.uuid4().hex[:12]}",
+                workflow_id=workflow_id,
+                event_type=event_type,
+                actor=actor,
+                details_json=details,
+                created_at=created_at,
+            )
+        )
+
+    def _stored_plan(self, row) -> StoredWorkflowPlan:
+        return StoredWorkflowPlan(
+            workflow_id=row["workflow_id"],
+            request_text=row["request_text"],
+            requester_role=row["requester_role"],
+            team_name=row["team_name"],
+            workflow_type=row["workflow_type"],
+            summary=row["summary"],
+            urgency=row["urgency"],
+            steps=[WorkflowStep(**step) for step in row["steps_json"]],
+            risks=row["risks_json"],
+            missing_inputs=row["missing_inputs_json"],
+            follow_up_questions=row["follow_up_questions_json"],
+            success_checks=row["success_checks_json"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+            approval_status=row["approval_status"],
+            decision_by=row["decision_by"],
+            decision_note=row["decision_note"],
+            decided_at=row["decided_at"],
+        )
 
     def _step_status_counts(self, steps: list[WorkflowStep]) -> dict[str, int]:
         counts = {status: 0 for status in STEP_STATUSES}

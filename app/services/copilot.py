@@ -4,6 +4,7 @@ from datetime import datetime
 import uuid
 
 from app.schemas.models import StoredWorkflowPlan
+from app.schemas.models import WorkflowAuditEvent
 from app.schemas.models import WorkflowPlanRequest
 from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowPlanResponse
@@ -79,13 +80,50 @@ class WorkflowCopilot:
     def get_plan(self, workflow_id: str) -> StoredWorkflowPlan | None:
         return self._store().get_plan(workflow_id)
 
-    def update_step_status(self, workflow_id: str, step_id: str, status: str) -> StoredWorkflowPlan | None:
+    def update_step_status(
+        self,
+        workflow_id: str,
+        step_id: str,
+        status: str,
+        actor: str = "workflow_api",
+    ) -> StoredWorkflowPlan | None:
         return self._store().update_step_status(
             workflow_id=workflow_id,
             step_id=step_id,
             status=status,
+            actor=actor,
             updated_at=self._timestamp(),
         )
+
+    def submit_for_approval(self, workflow_id: str, actor: str) -> StoredWorkflowPlan | None:
+        return self._store().submit_for_approval(
+            workflow_id=workflow_id,
+            actor=actor,
+            submitted_at=self._timestamp(),
+        )
+
+    def decide_plan(
+        self,
+        workflow_id: str,
+        decision: str,
+        actor: str,
+        note: str | None,
+    ) -> StoredWorkflowPlan | None:
+        return self._store().decide_plan(
+            workflow_id=workflow_id,
+            decision=decision,
+            actor=actor,
+            note=note,
+            decided_at=self._timestamp(),
+        )
+
+    def list_audit_events(self, workflow_id: str) -> list[WorkflowAuditEvent] | None:
+        return self._store().list_audit_events(workflow_id)
+
+    def database_readiness(self) -> str:
+        store = self._store()
+        store.check_connection()
+        return store.database_backend
 
     def _store(self) -> WorkflowStore:
         if self.store is None:
@@ -106,7 +144,9 @@ class WorkflowCopilot:
                 "incident": 4,
                 "outage": 5,
                 "sev": 4,
-                "rollback": 4,
+                # Rollback is a supporting signal because controlled releases
+                # commonly require one. Active incident terms carry the weight.
+                "rollback": 1,
                 "degraded": 3,
                 "mitigation": 2,
                 "production issue": 4,
@@ -418,7 +458,7 @@ class WorkflowCopilot:
         return self._dedupe(questions)
 
     def _timestamp(self) -> str:
-        return datetime.now(UTC).replace(microsecond=0).isoformat()
+        return datetime.now(UTC).isoformat()
 
     def _workflow_rank(self, workflow_type: str) -> int:
         order = {

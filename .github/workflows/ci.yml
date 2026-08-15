@@ -6,9 +6,29 @@ on:
       - main
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
-  test:
+  backend:
+    name: Backend tests
     runs-on: ubuntu-latest
+    env:
+      TEST_POSTGRES_DATABASE_URL: postgresql+psycopg://workflow:workflow-test@localhost:5432/workflow_test
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: workflow_test
+          POSTGRES_USER: workflow
+          POSTGRES_PASSWORD: workflow-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U workflow -d workflow_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Check out repository
@@ -23,5 +43,60 @@ jobs:
       - name: Install dependencies
         run: python -m pip install -r requirements.txt
 
+      - name: Apply PostgreSQL migrations
+        env:
+          WORKFLOW_DATABASE_URL: ${{ env.TEST_POSTGRES_DATABASE_URL }}
+        run: alembic upgrade head
+
       - name: Run tests
         run: python -m pytest
+
+  frontend:
+    name: Frontend quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint frontend
+        run: pnpm lint
+
+      - name: Test frontend
+        run: pnpm test
+
+      - name: Build frontend
+        run: pnpm build
+
+  containers:
+    name: Container builds
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+
+      - name: Build application images
+        run: docker compose build
