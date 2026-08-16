@@ -15,6 +15,8 @@ COPY --chown=app:app alembic.ini main.py ./
 COPY --chown=app:app migrations ./migrations
 COPY --chown=app:app app ./app
 
+RUN mkdir -p /app/data && chown app:app /app/data
+
 USER app
 EXPOSE 8000
 

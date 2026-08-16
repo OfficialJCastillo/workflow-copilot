@@ -1,15 +1,31 @@
 from dataclasses import dataclass
 from datetime import UTC
 from datetime import datetime
+from pathlib import Path
+from time import perf_counter
 import uuid
 
+from app.schemas.models import EvidenceSearchResponse
+from app.schemas.models import EvidenceSearchResult
+from app.schemas.models import GroundedAnswerClaim
+from app.schemas.models import GroundedAnswerResponse
+from app.schemas.models import HybridIndexStatusResponse
 from app.schemas.models import StoredWorkflowPlan
+from app.schemas.models import WorkflowEvidence
 from app.schemas.models import WorkflowAuditEvent
 from app.schemas.models import WorkflowPlanRequest
 from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowPlanResponse
 from app.schemas.models import WorkflowStep
 from app.services.store import WorkflowStore
+from app.services.evidence import EvidenceIngestionService
+from app.services.grounding import GroundedAnswerService
+from app.services.hybrid_retrieval import HybridEvidenceRetriever
+from app.services.persistent_hybrid_retrieval import (
+    PersistentHybridEvidenceRetriever,
+)
+from app.services.retrieval import EvidenceRetriever
+from app.services.retrieval import SearchDocument
 
 
 @dataclass(frozen=True)
@@ -23,8 +39,21 @@ class WorkflowTemplate:
 
 
 class WorkflowCopilot:
-    def __init__(self, store: WorkflowStore | None = None) -> None:
+    def __init__(
+        self,
+        store: WorkflowStore | None = None,
+        hybrid_index_path: str | Path | None = None,
+        compact_hybrid_index_on_delete: bool = False,
+    ) -> None:
         self.store = store
+        self.compact_hybrid_index_on_delete = compact_hybrid_index_on_delete
+        self.evidence_ingestion = EvidenceIngestionService()
+        self.evidence_retriever = EvidenceRetriever()
+        self.hybrid_evidence_retriever = (
+            PersistentHybridEvidenceRetriever(index_path=Path(hybrid_index_path))
+            if hybrid_index_path is not None
+            else HybridEvidenceRetriever()
+        )
 
     def build_plan(self, request: WorkflowPlanRequest) -> WorkflowPlanResponse:
         workflow_type = self._detect_workflow_type(request.request_text)
@@ -119,6 +148,288 @@ class WorkflowCopilot:
 
     def list_audit_events(self, workflow_id: str) -> list[WorkflowAuditEvent] | None:
         return self._store().list_audit_events(workflow_id)
+
+    def attach_evidence(
+        self,
+        *,
+        workflow_id: str,
+        filename: str,
+        media_type: str,
+        content: bytes,
+        actor: str,
+    ) -> WorkflowEvidence | None:
+        if self.get_plan(workflow_id) is None:
+            return None
+        evidence = self.evidence_ingestion.extract(
+            filename=filename,
+            media_type=media_type,
+            content=content,
+        )
+        store = self._store()
+        saved = store.save_evidence(
+            workflow_id=workflow_id,
+            filename=evidence.filename,
+            media_type=evidence.media_type,
+            content_text=evidence.content_text,
+            excerpt=evidence.excerpt,
+            source_sha256=evidence.source_sha256,
+            page_count=evidence.page_count,
+            character_count=evidence.character_count,
+            actor=actor,
+            created_at=self._timestamp(),
+        )
+        if saved is None:
+            return None
+        if isinstance(
+            self.hybrid_evidence_retriever,
+            PersistentHybridEvidenceRetriever,
+        ):
+            documents = store.list_search_documents(workflow_id)
+            if documents is not None:
+                preparation = self.hybrid_evidence_retriever.prepare_documents(
+                    documents,
+                    namespace=f"workflow:{workflow_id}",
+                )
+                if saved.created:
+                    store.record_evidence_index_refresh(
+                        workflow_id=workflow_id,
+                        actor=actor,
+                        fingerprint=preparation.fingerprint,
+                        chunk_count=preparation.chunk_count,
+                        cache_status=preparation.cache_status,
+                        removed_corpus_count=preparation.removed_corpus_count,
+                        index_size_bytes=preparation.index_size_bytes,
+                        created_at=self._timestamp(),
+                    )
+        return saved.evidence
+
+    def list_evidence(self, workflow_id: str) -> list[WorkflowEvidence] | None:
+        return self._store().list_evidence(workflow_id)
+
+    def delete_evidence(
+        self,
+        *,
+        workflow_id: str,
+        evidence_id: str,
+        actor: str,
+    ) -> WorkflowEvidence | None:
+        store = self._store()
+        deleted = store.delete_evidence(
+            workflow_id=workflow_id,
+            evidence_id=evidence_id,
+            actor=actor,
+            deleted_at=self._timestamp(),
+        )
+        if deleted is None:
+            return None
+
+        retriever = self.hybrid_evidence_retriever
+        if isinstance(retriever, PersistentHybridEvidenceRetriever):
+            documents = store.list_search_documents(workflow_id)
+            if documents:
+                preparation = retriever.prepare_documents(
+                    documents,
+                    namespace=f"workflow:{workflow_id}",
+                )
+                fingerprint = preparation.fingerprint
+                chunk_count = preparation.chunk_count
+                cache_status = preparation.cache_status
+                removed_corpus_count = preparation.removed_corpus_count
+                removed_namespace_count = 0
+            else:
+                cleanup = retriever.clear_namespace(f"workflow:{workflow_id}")
+                fingerprint = ""
+                chunk_count = 0
+                cache_status = "cleared"
+                removed_corpus_count = cleanup.removed_corpus_count
+                removed_namespace_count = cleanup.removed_namespace_count
+
+            compaction_reclaimed_bytes = 0
+            if self.compact_hybrid_index_on_delete:
+                compaction = retriever.compact()
+                compaction_reclaimed_bytes = compaction.reclaimed_bytes
+            store.record_evidence_index_refresh(
+                workflow_id=workflow_id,
+                actor=actor,
+                fingerprint=fingerprint,
+                chunk_count=chunk_count,
+                cache_status=cache_status,
+                removed_corpus_count=removed_corpus_count,
+                index_size_bytes=retriever.index_size_bytes,
+                created_at=self._timestamp(),
+                compacted=self.compact_hybrid_index_on_delete,
+                compaction_reclaimed_bytes=compaction_reclaimed_bytes,
+                removed_namespace_count=removed_namespace_count,
+            )
+        return deleted
+
+    def search_evidence(
+        self,
+        *,
+        workflow_id: str,
+        query: str,
+        top_k: int,
+        strategy: str = "lexical",
+    ) -> EvidenceSearchResponse | None:
+        documents = self._store().list_search_documents(workflow_id)
+        if documents is None:
+            return None
+        started = perf_counter()
+        retriever = self._evidence_retriever(strategy)
+        self._prepare_runtime_index(
+            workflow_id=workflow_id,
+            documents=documents,
+            retriever=retriever,
+        )
+        retrieval = retriever.search(
+            query=query,
+            documents=documents,
+            top_k=top_k,
+        )
+        latency_ms = (perf_counter() - started) * 1_000
+        return EvidenceSearchResponse(
+            query=query,
+            strategy=strategy,
+            retriever=retriever.strategy_name,
+            index_backend=(
+                "sqlite"
+                if isinstance(retriever, PersistentHybridEvidenceRetriever)
+                else None
+            ),
+            source_count=len(documents),
+            total_chunks=retrieval.total_chunks,
+            evidence_found=bool(retrieval.results),
+            latency_ms=round(latency_ms, 3),
+            abstention_reason=retrieval.abstention_reason,
+            required_terms=list(retrieval.required_terms),
+            results=[
+                EvidenceSearchResult(
+                    chunk_id=result.chunk_id,
+                    evidence_id=result.source_id,
+                    citation_id=result.citation_id,
+                    filename=result.filename,
+                    chunk_index=result.chunk_index,
+                    content=result.content,
+                    retrieval_score=result.retrieval_score,
+                    rerank_score=result.rerank_score,
+                    matched_terms=list(result.matched_terms),
+                    relevance_label=result.relevance_label,
+                    core_matches=list(result.core_matches),
+                )
+                for result in retrieval.results
+            ],
+        )
+
+    def answer_from_evidence(
+        self,
+        *,
+        workflow_id: str,
+        query: str,
+        top_k: int,
+        max_claims: int,
+        strategy: str = "lexical",
+    ) -> GroundedAnswerResponse | None:
+        documents = self._store().list_search_documents(workflow_id)
+        if documents is None:
+            return None
+        started = perf_counter()
+        retriever = self._evidence_retriever(strategy)
+        self._prepare_runtime_index(
+            workflow_id=workflow_id,
+            documents=documents,
+            retriever=retriever,
+        )
+        grounded = GroundedAnswerService(retriever).answer(
+            query=query,
+            documents=documents,
+            top_k=top_k,
+            max_claims=max_claims,
+        )
+        latency_ms = (perf_counter() - started) * 1_000
+        return GroundedAnswerResponse(
+            query=query,
+            strategy=strategy,
+            retriever=retriever.strategy_name,
+            index_backend=(
+                "sqlite"
+                if isinstance(retriever, PersistentHybridEvidenceRetriever)
+                else None
+            ),
+            status=grounded.status,
+            answer=grounded.answer,
+            source_count=grounded.source_count,
+            total_chunks=grounded.total_chunks,
+            query_term_coverage=grounded.query_term_coverage,
+            latency_ms=round(latency_ms, 3),
+            abstention_reason=grounded.abstention_reason,
+            required_terms=list(grounded.required_terms),
+            context_policy=grounded.context_policy,
+            excluded_result_count=grounded.excluded_result_count,
+            claims=[
+                GroundedAnswerClaim(
+                    claim_id=claim.claim_id,
+                    text=claim.text,
+                    evidence_id=claim.source_id,
+                    citation_id=claim.citation_id,
+                    filename=claim.filename,
+                    chunk_id=claim.chunk_id,
+                    matched_terms=list(claim.matched_terms),
+                )
+                for claim in grounded.claims
+            ],
+        )
+
+    def _evidence_retriever(self, strategy: str) -> EvidenceRetriever:
+        if strategy == "hybrid":
+            return self.hybrid_evidence_retriever
+        return self.evidence_retriever
+
+    @staticmethod
+    def _prepare_runtime_index(
+        *,
+        workflow_id: str,
+        documents: list[SearchDocument],
+        retriever: EvidenceRetriever,
+    ) -> None:
+        if isinstance(retriever, PersistentHybridEvidenceRetriever):
+            retriever.prepare_documents(
+                documents,
+                namespace=f"workflow:{workflow_id}",
+            )
+
+    def hybrid_index_status(self) -> HybridIndexStatusResponse:
+        retriever = self.hybrid_evidence_retriever
+        if not isinstance(retriever, PersistentHybridEvidenceRetriever):
+            return HybridIndexStatusResponse(
+                enabled=False,
+                retriever=retriever.strategy_name,
+                indexed_corpus_count=0,
+                indexed_chunk_count=0,
+                indexed_namespace_count=0,
+                index_size_bytes=0,
+                memory_cache_hits=0,
+                disk_cache_hits=0,
+                cache_misses=0,
+                compact_on_delete=False,
+                compaction_count=0,
+                last_compaction_reclaimed_bytes=0,
+            )
+        retriever.check_connection()
+        return HybridIndexStatusResponse(
+            enabled=True,
+            backend="sqlite",
+            retriever=retriever.strategy_name,
+            indexed_corpus_count=retriever.indexed_corpus_count,
+            indexed_chunk_count=retriever.indexed_chunk_count,
+            indexed_namespace_count=retriever.indexed_namespace_count,
+            index_size_bytes=retriever.index_size_bytes,
+            memory_cache_hits=retriever.memory_cache_hits,
+            disk_cache_hits=retriever.disk_cache_hits,
+            cache_misses=retriever.cache_misses,
+            compact_on_delete=self.compact_hybrid_index_on_delete,
+            compaction_count=retriever.compaction_count,
+            last_compaction_reclaimed_bytes=retriever.last_compaction_reclaimed_bytes,
+        )
 
     def database_readiness(self) -> str:
         store = self._store()

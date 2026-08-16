@@ -1,0 +1,104 @@
+{
+  "case_count": 6,
+  "cases": [
+    {
+      "case_id": "release-grounded-001",
+      "evidence_absence_correct": null,
+      "expected_sources": [
+        "release-brief",
+        "support-plan"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "retrieved_sources": [
+        "release-brief",
+        "support-plan"
+      ]
+    },
+    {
+      "case_id": "release-missing-002",
+      "evidence_absence_correct": null,
+      "expected_sources": [
+        "release-scope"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "retrieved_sources": [
+        "release-scope"
+      ]
+    },
+    {
+      "case_id": "incident-runbook-003",
+      "evidence_absence_correct": null,
+      "expected_sources": [
+        "incident-runbook"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "retrieved_sources": [
+        "incident-runbook"
+      ]
+    },
+    {
+      "case_id": "vendor-conflict-004",
+      "evidence_absence_correct": null,
+      "expected_sources": [
+        "commercial-terms",
+        "security-review"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "retrieved_sources": [
+        "security-review",
+        "commercial-terms"
+      ]
+    },
+    {
+      "case_id": "onboarding-access-005",
+      "evidence_absence_correct": null,
+      "expected_sources": [
+        "access-checklist"
+      ],
+      "recall_at_k": 1.0,
+      "reciprocal_rank": 1.0,
+      "retrieved_sources": [
+        "access-checklist"
+      ]
+    },
+    {
+      "case_id": "release-unsupported-006",
+      "evidence_absence_correct": true,
+      "expected_sources": [],
+      "recall_at_k": null,
+      "reciprocal_rank": null,
+      "retrieved_sources": []
+    }
+  ],
+  "cases_with_expected_evidence": 5,
+  "dataset": "workflow_evidence_v1",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.3"
+  },
+  "latency_ms": {
+    "maximum": 0.1345,
+    "p50": 0.0183,
+    "p95": 0.0326,
+    "sample_count": 300
+  },
+  "methodology": {
+    "chunk_words": 120,
+    "corpus": "synthetic",
+    "overlap_words": 30,
+    "runs_per_case": 50
+  },
+  "quality": {
+    "evidence_absence_accuracy": 1.0,
+    "mean_reciprocal_rank": 1.0,
+    "source_recall_at_k": 1.0
+  },
+  "retriever": "deterministic_bm25_lexical_reranker_v1",
+  "schema_version": 1,
+  "top_k": 3
+}

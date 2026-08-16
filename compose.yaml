@@ -21,6 +21,9 @@ services:
       WORKFLOW_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-workflow}:${POSTGRES_PASSWORD:-workflow-local}@db:5432/${POSTGRES_DB:-workflow_copilot}
       WORKFLOW_AUTO_CREATE_SCHEMA: "0"
       WORKFLOW_CORS_ORIGINS: ${WORKFLOW_CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      WORKFLOW_LOG_LEVEL: ${WORKFLOW_LOG_LEVEL:-INFO}
+      WORKFLOW_HYBRID_INDEX_PATH: /app/data/workflow_hybrid_index.db
+      WORKFLOW_HYBRID_INDEX_COMPACT_ON_DELETE: ${WORKFLOW_HYBRID_INDEX_COMPACT_ON_DELETE:-0}
     depends_on:
       db:
         condition: service_healthy
@@ -31,6 +34,8 @@ services:
       retries: 10
     ports:
       - "8000:8000"
+    volumes:
+      - workflow_hybrid_index_data:/app/data
 
   web:
     build:
@@ -44,3 +49,4 @@ services:
 
 volumes:
   workflow_postgres_data:
+  workflow_hybrid_index_data:

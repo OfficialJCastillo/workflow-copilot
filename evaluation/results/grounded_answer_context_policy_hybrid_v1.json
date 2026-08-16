@@ -1,0 +1,125 @@
+{
+  "answerer": "deterministic_extractive_grounding_v2",
+  "case_count": 6,
+  "cases": [
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "support-coverage-completion-013",
+      "cited_sources": [
+        "release-controls",
+        "support-roster"
+      ],
+      "claim_count": 3,
+      "context_policy": "strong_plus_supporting",
+      "excluded_result_count": 1,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.8333,
+      "supported_claims": 3
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "test-coverage-false-friend-014",
+      "cited_sources": [
+        "release-runbook"
+      ],
+      "claim_count": 2,
+      "context_policy": "strong_only",
+      "excluded_result_count": 2,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.5,
+      "supported_claims": 2
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "market-coverage-false-friend-015",
+      "cited_sources": [
+        "release-controls"
+      ],
+      "claim_count": 1,
+      "context_policy": "strong_only",
+      "excluded_result_count": 2,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.4,
+      "supported_claims": 1
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "redundant-support-coverage-016",
+      "cited_sources": [
+        "release-readiness"
+      ],
+      "claim_count": 2,
+      "context_policy": "strong_only",
+      "excluded_result_count": 2,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 1.0,
+      "supported_claims": 2
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "support-coverage-query-017",
+      "cited_sources": [
+        "support-roster"
+      ],
+      "claim_count": 1,
+      "context_policy": "supporting_only",
+      "excluded_result_count": 2,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 1.0,
+      "supported_claims": 1
+    },
+    {
+      "actual_status": "insufficient_evidence",
+      "behavior_correct": true,
+      "case_id": "coverage-compound-abstention-018",
+      "cited_sources": [],
+      "claim_count": 0,
+      "context_policy": "all_ranked",
+      "excluded_result_count": 0,
+      "expected_source_recall": null,
+      "expected_status": "insufficient_evidence",
+      "query_term_coverage": 0.0,
+      "supported_claims": 0
+    }
+  ],
+  "claim_count": 9,
+  "dataset": "workflow_evidence_context_policy_v1",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.3"
+  },
+  "latency_ms": {
+    "maximum": 1.5069,
+    "p50": 0.1205,
+    "p95": 0.1866,
+    "sample_count": 300
+  },
+  "methodology": {
+    "corpus": "synthetic",
+    "max_claims": 5,
+    "runs_per_case": 50,
+    "support_check": "normalized claim text is contained by its cited source",
+    "top_k": 3
+  },
+  "quality": {
+    "citation_correctness": 1.0,
+    "citation_coverage": 1.0,
+    "expected_source_precision": 1.0,
+    "expected_source_recall": 1.0,
+    "grounding_behavior_accuracy": 1.0,
+    "unsupported_claim_rate": 0.0
+  },
+  "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+  "schema_version": 1
+}

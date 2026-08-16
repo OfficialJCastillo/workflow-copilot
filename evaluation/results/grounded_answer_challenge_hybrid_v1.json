@@ -1,0 +1,126 @@
+{
+  "answerer": "deterministic_extractive_grounding_v2",
+  "case_count": 6,
+  "cases": [
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "release-paraphrase-007",
+      "cited_sources": [
+        "recovery-procedure"
+      ],
+      "claim_count": 2,
+      "context_policy": "all_ranked",
+      "excluded_result_count": 0,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.5,
+      "supported_claims": 2
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "access-paraphrase-008",
+      "cited_sources": [
+        "access-policy"
+      ],
+      "claim_count": 1,
+      "context_policy": "strong_only",
+      "excluded_result_count": 2,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.2857,
+      "supported_claims": 1
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "incident-paraphrase-009",
+      "cited_sources": [
+        "incident-procedure"
+      ],
+      "claim_count": 1,
+      "context_policy": "all_ranked",
+      "excluded_result_count": 0,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.8571,
+      "supported_claims": 1
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "vendor-distractors-010",
+      "cited_sources": [
+        "commercial-review",
+        "security-review"
+      ],
+      "claim_count": 3,
+      "context_policy": "strong_only",
+      "excluded_result_count": 1,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.6667,
+      "supported_claims": 3
+    },
+    {
+      "actual_status": "grounded",
+      "behavior_correct": true,
+      "case_id": "release-conflict-011",
+      "cited_sources": [
+        "runbook-b",
+        "runbook-a"
+      ],
+      "claim_count": 4,
+      "context_policy": "all_ranked",
+      "excluded_result_count": 0,
+      "expected_source_recall": 1.0,
+      "expected_status": "grounded",
+      "query_term_coverage": 0.3333,
+      "supported_claims": 4
+    },
+    {
+      "actual_status": "insufficient_evidence",
+      "behavior_correct": true,
+      "case_id": "absence-distractors-012",
+      "cited_sources": [],
+      "claim_count": 0,
+      "context_policy": "all_ranked",
+      "excluded_result_count": 0,
+      "expected_source_recall": null,
+      "expected_status": "insufficient_evidence",
+      "query_term_coverage": 0.0,
+      "supported_claims": 0
+    }
+  ],
+  "claim_count": 11,
+  "dataset": "workflow_evidence_challenge_v1",
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.3"
+  },
+  "latency_ms": {
+    "maximum": 1.6035,
+    "p50": 0.1867,
+    "p95": 0.2497,
+    "sample_count": 300
+  },
+  "methodology": {
+    "corpus": "synthetic",
+    "max_claims": 5,
+    "runs_per_case": 50,
+    "support_check": "normalized claim text is contained by its cited source",
+    "top_k": 3
+  },
+  "quality": {
+    "citation_correctness": 1.0,
+    "citation_coverage": 1.0,
+    "expected_source_precision": 1.0,
+    "expected_source_recall": 1.0,
+    "grounding_behavior_accuracy": 1.0,
+    "unsupported_claim_rate": 0.0
+  },
+  "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+  "schema_version": 1
+}

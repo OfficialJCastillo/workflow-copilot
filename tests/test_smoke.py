@@ -232,7 +232,7 @@ def test_alembic_migrates_existing_plan_database(tmp_path: Path, monkeypatch) ->
 
     assert {"approval_status", "decision_by", "decision_note", "decided_at"} <= plan_columns
     assert audit_table is not None
-    assert migration_version == ("20260815_0001",)
+    assert migration_version == ("20260815_0002",)
 
 
 def test_alembic_creates_the_current_schema(tmp_path: Path, monkeypatch) -> None:
@@ -250,5 +250,6 @@ def test_alembic_creates_the_current_schema(tmp_path: Path, monkeypatch) -> None
         "alembic_version",
         "workflow_plans",
         "workflow_audit_events",
+        "workflow_evidence",
     } <= table_names
     store.check_connection()

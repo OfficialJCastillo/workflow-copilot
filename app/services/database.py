@@ -4,11 +4,13 @@ from pathlib import Path
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Index
+from sqlalchemy import Integer
 from sqlalchemy import JSON
 from sqlalchemy import MetaData
 from sqlalchemy import String
 from sqlalchemy import Table
 from sqlalchemy import Text
+from sqlalchemy import UniqueConstraint
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.engine import make_url
@@ -58,10 +60,41 @@ workflow_audit_events = Table(
     Column("created_at", String(40), nullable=False),
 )
 
+workflow_evidence = Table(
+    "workflow_evidence",
+    metadata,
+    Column("evidence_id", String(32), primary_key=True),
+    Column(
+        "workflow_id",
+        String(32),
+        ForeignKey("workflow_plans.workflow_id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("filename", String(255), nullable=False),
+    Column("media_type", String(120), nullable=False),
+    Column("content_text", Text, nullable=False),
+    Column("excerpt", Text, nullable=False),
+    Column("source_sha256", String(64), nullable=False),
+    Column("page_count", Integer),
+    Column("character_count", Integer, nullable=False),
+    Column("created_at", String(40), nullable=False),
+    UniqueConstraint(
+        "workflow_id",
+        "source_sha256",
+        name="uq_workflow_evidence_workflow_source",
+    ),
+)
+
 Index(
     "idx_workflow_audit_events_workflow_created",
     workflow_audit_events.c.workflow_id,
     workflow_audit_events.c.created_at,
+)
+
+Index(
+    "idx_workflow_evidence_workflow_created",
+    workflow_evidence.c.workflow_id,
+    workflow_evidence.c.created_at,
 )
 
 

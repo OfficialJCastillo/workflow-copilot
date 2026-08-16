@@ -1,7 +1,9 @@
+from dataclasses import dataclass
 import os
 import uuid
 
 from sqlalchemy import Engine
+from sqlalchemy import delete
 from sqlalchemy import func
 from sqlalchemy import insert
 from sqlalchemy import select
@@ -9,13 +11,16 @@ from sqlalchemy import update
 
 from app.schemas.models import StoredWorkflowPlan
 from app.schemas.models import WorkflowAuditEvent
+from app.schemas.models import WorkflowEvidence
 from app.schemas.models import WorkflowPlanListItem
 from app.schemas.models import WorkflowStep
 from app.services.database import create_database_engine
 from app.services.database import database_url_from_path
 from app.services.database import metadata
 from app.services.database import workflow_audit_events
+from app.services.database import workflow_evidence
 from app.services.database import workflow_plans
+from app.services.retrieval import SearchDocument
 
 
 STEP_STATUSES = ("pending", "in_progress", "completed", "blocked")
@@ -23,6 +28,12 @@ STEP_STATUSES = ("pending", "in_progress", "completed", "blocked")
 
 class InvalidApprovalTransition(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class EvidenceSaveResult:
+    evidence: WorkflowEvidence
+    created: bool
 
 
 class WorkflowStore:
@@ -308,6 +319,195 @@ class WorkflowStore:
             for row in rows
         ]
 
+    def save_evidence(
+        self,
+        *,
+        workflow_id: str,
+        filename: str,
+        media_type: str,
+        content_text: str,
+        excerpt: str,
+        source_sha256: str,
+        page_count: int | None,
+        character_count: int,
+        actor: str,
+        created_at: str,
+    ) -> EvidenceSaveResult | None:
+        evidence_id = f"evi-{uuid.uuid4().hex[:12]}"
+        payload = {
+            "evidence_id": evidence_id,
+            "workflow_id": workflow_id,
+            "filename": filename,
+            "media_type": media_type,
+            "content_text": content_text,
+            "excerpt": excerpt,
+            "source_sha256": source_sha256,
+            "page_count": page_count,
+            "character_count": character_count,
+            "created_at": created_at,
+        }
+        with self.engine.begin() as connection:
+            plan_exists = connection.execute(
+                select(workflow_plans.c.workflow_id).where(
+                    workflow_plans.c.workflow_id == workflow_id
+                )
+            ).first()
+            if plan_exists is None:
+                return None
+
+            existing = connection.execute(
+                select(workflow_evidence).where(
+                    workflow_evidence.c.workflow_id == workflow_id,
+                    workflow_evidence.c.source_sha256 == source_sha256,
+                )
+            ).mappings().first()
+            if existing is not None:
+                return EvidenceSaveResult(
+                    evidence=self._workflow_evidence(existing),
+                    created=False,
+                )
+
+            connection.execute(insert(workflow_evidence).values(**payload))
+            connection.execute(
+                update(workflow_plans)
+                .where(workflow_plans.c.workflow_id == workflow_id)
+                .values(updated_at=created_at)
+            )
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type="evidence_attached",
+                actor=actor,
+                details={
+                    "evidence_id": evidence_id,
+                    "filename": filename,
+                    "media_type": media_type,
+                },
+                created_at=created_at,
+            )
+        return EvidenceSaveResult(
+            evidence=self._workflow_evidence(payload),
+            created=True,
+        )
+
+    def record_evidence_index_refresh(
+        self,
+        *,
+        workflow_id: str,
+        actor: str,
+        fingerprint: str,
+        chunk_count: int,
+        cache_status: str,
+        removed_corpus_count: int,
+        index_size_bytes: int,
+        created_at: str,
+        compacted: bool = False,
+        compaction_reclaimed_bytes: int = 0,
+        removed_namespace_count: int = 0,
+    ) -> None:
+        with self.engine.begin() as connection:
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type="evidence_index_refreshed",
+                actor=actor,
+                details={
+                    "fingerprint": fingerprint[:12],
+                    "chunk_count": str(chunk_count),
+                    "cache_status": cache_status,
+                    "removed_corpus_count": str(removed_corpus_count),
+                    "index_size_bytes": str(index_size_bytes),
+                    "compacted": str(compacted).lower(),
+                    "compaction_reclaimed_bytes": str(compaction_reclaimed_bytes),
+                    "removed_namespace_count": str(removed_namespace_count),
+                },
+                created_at=created_at,
+            )
+
+    def delete_evidence(
+        self,
+        *,
+        workflow_id: str,
+        evidence_id: str,
+        actor: str,
+        deleted_at: str,
+    ) -> WorkflowEvidence | None:
+        with self.engine.begin() as connection:
+            existing = connection.execute(
+                select(workflow_evidence).where(
+                    workflow_evidence.c.workflow_id == workflow_id,
+                    workflow_evidence.c.evidence_id == evidence_id,
+                )
+            ).mappings().first()
+            if existing is None:
+                return None
+
+            connection.execute(
+                delete(workflow_evidence).where(
+                    workflow_evidence.c.workflow_id == workflow_id,
+                    workflow_evidence.c.evidence_id == evidence_id,
+                )
+            )
+            connection.execute(
+                update(workflow_plans)
+                .where(workflow_plans.c.workflow_id == workflow_id)
+                .values(updated_at=deleted_at)
+            )
+            self._record_audit_event(
+                connection=connection,
+                workflow_id=workflow_id,
+                event_type="evidence_deleted",
+                actor=actor,
+                details={
+                    "evidence_id": evidence_id,
+                    "filename": existing["filename"],
+                },
+                created_at=deleted_at,
+            )
+        return self._workflow_evidence(existing)
+
+    def list_evidence(self, workflow_id: str) -> list[WorkflowEvidence] | None:
+        if self.get_plan(workflow_id) is None:
+            return None
+        statement = (
+            select(workflow_evidence)
+            .where(workflow_evidence.c.workflow_id == workflow_id)
+            .order_by(
+                workflow_evidence.c.created_at.asc(),
+                workflow_evidence.c.evidence_id.asc(),
+            )
+        )
+        with self.engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+        return [self._workflow_evidence(row) for row in rows]
+
+    def list_search_documents(self, workflow_id: str) -> list[SearchDocument] | None:
+        if self.get_plan(workflow_id) is None:
+            return None
+        statement = (
+            select(
+                workflow_evidence.c.evidence_id,
+                workflow_evidence.c.filename,
+                workflow_evidence.c.content_text,
+            )
+            .where(workflow_evidence.c.workflow_id == workflow_id)
+            .order_by(
+                workflow_evidence.c.created_at.asc(),
+                workflow_evidence.c.evidence_id.asc(),
+            )
+        )
+        with self.engine.connect() as connection:
+            rows = connection.execute(statement).mappings().all()
+        return [
+            SearchDocument(
+                source_id=row["evidence_id"],
+                citation_id=self._citation_id(row["evidence_id"]),
+                filename=row["filename"],
+                content=row["content_text"],
+            )
+            for row in rows
+        ]
+
     def count_plans(self) -> int:
         with self.engine.connect() as connection:
             return connection.execute(select(func.count()).select_from(workflow_plans)).scalar_one()
@@ -353,6 +553,26 @@ class WorkflowStore:
             decision_note=row["decision_note"],
             decided_at=row["decided_at"],
         )
+
+    @staticmethod
+    def _workflow_evidence(row) -> WorkflowEvidence:
+        evidence_id = row["evidence_id"]
+        return WorkflowEvidence(
+            evidence_id=evidence_id,
+            citation_id=WorkflowStore._citation_id(evidence_id),
+            workflow_id=row["workflow_id"],
+            filename=row["filename"],
+            media_type=row["media_type"],
+            excerpt=row["excerpt"],
+            source_sha256=row["source_sha256"],
+            page_count=row["page_count"],
+            character_count=row["character_count"],
+            created_at=row["created_at"],
+        )
+
+    @staticmethod
+    def _citation_id(evidence_id: str) -> str:
+        return f"SRC-{evidence_id.removeprefix('evi-')[:6].upper()}"
 
     def _step_status_counts(self, steps: list[WorkflowStep]) -> dict[str, int]:
         counts = {status: 0 for status in STEP_STATUSES}

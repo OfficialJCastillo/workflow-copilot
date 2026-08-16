@@ -1,8 +1,13 @@
 import type {
   ApprovalDecisionInput,
   CreatePlanInput,
+  EvidenceSearchResponse,
+  GroundedAnswerResponse,
+  RetrievalStrategy,
+  ServiceMetrics,
   StepStatus,
   WorkflowAuditEvent,
+  WorkflowEvidence,
   WorkflowPlan,
   WorkflowPlanListItem,
 } from "./types"
@@ -18,12 +23,13 @@ function errorMessage(payload: unknown, fallback: string): string {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers = new Headers(init?.headers)
+  if (!(init?.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json")
+  }
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -35,6 +41,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const workflowApi = {
+  getMetrics: () => request<ServiceMetrics>("/metrics"),
+
   listPlans: () => request<WorkflowPlanListItem[]>("/workflow/plans"),
 
   getPlan: (workflowId: string) =>
@@ -71,4 +79,49 @@ export const workflowApi = {
 
   listAuditEvents: (workflowId: string) =>
     request<WorkflowAuditEvent[]>(`/workflow/plans/${workflowId}/audit-events`),
+
+  listEvidence: (workflowId: string) =>
+    request<WorkflowEvidence[]>(`/workflow/plans/${workflowId}/evidence`),
+
+  attachEvidence: (workflowId: string, file: File, actor: string) => {
+    const body = new FormData()
+    body.append("file", file)
+    body.append("actor", actor)
+    return request<WorkflowEvidence>(`/workflow/plans/${workflowId}/evidence`, {
+      method: "POST",
+      body,
+    })
+  },
+
+  deleteEvidence: (workflowId: string, evidenceId: string, actor: string) =>
+    request<WorkflowEvidence>(
+      `/workflow/plans/${workflowId}/evidence/${evidenceId}`,
+      {
+        method: "DELETE",
+        body: JSON.stringify({ actor }),
+      },
+    ),
+
+  searchEvidence: (
+    workflowId: string,
+    query: string,
+    strategy: RetrievalStrategy = "lexical",
+    topK = 3,
+  ) =>
+    request<EvidenceSearchResponse>(`/workflow/plans/${workflowId}/evidence/search`, {
+      method: "POST",
+      body: JSON.stringify({ query, strategy, top_k: topK }),
+    }),
+
+  answerFromEvidence: (
+    workflowId: string,
+    query: string,
+    strategy: RetrievalStrategy = "lexical",
+    topK = 3,
+    maxClaims = 5,
+  ) =>
+    request<GroundedAnswerResponse>(`/workflow/plans/${workflowId}/evidence/answer`, {
+      method: "POST",
+      body: JSON.stringify({ query, strategy, top_k: topK, max_claims: maxClaims }),
+    }),
 }

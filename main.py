@@ -1,6 +1,7 @@
 import os
 
 from app.api.routes import router
+from app.services.observability import ObservabilityMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -25,5 +26,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "Server-Timing"],
 )
+app.add_middleware(ObservabilityMiddleware)
 app.include_router(router)

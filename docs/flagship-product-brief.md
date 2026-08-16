@@ -39,14 +39,51 @@ A platform team is preparing a customer-facing API release. The original request
 - Backend and frontend tests in GitHub Actions
 - PostgreSQL integration coverage and container build validation
 - Docker Compose environment for the frontend, API, and database
+- Structured request logs, validated request IDs, and rolling latency/error metrics
+- API request volume and P95 latency shown in the browser workspace
+- Bounded UTF-8 text and PDF ingestion with persisted extracted evidence
+- Stable source citations, SHA-256 fingerprints, duplicate detection, and evidence audit events
+- Versioned synthetic evaluation dataset covering grounded, missing, and conflicting evidence
+- Deterministic overlapping evidence chunks with BM25-style lexical retrieval and transparent reranking
+- Interactive ranked evidence search with citations, matched terms, scores, and explicit no-evidence behavior
+- Reproducible six-case synthetic baseline: 1.00 Recall@3, 1.00 MRR, 1.00 evidence-absence accuracy, and 0.0326 ms local P95 retrieval latency
+- Deterministic extractive answers with claim-level citations, partial-evidence warnings, and abstention
+- Grounded-answer synthetic baseline across 13 claims: 1.00 citation correctness, 0.00 unsupported-claim rate, and 0.1050 ms local P95 answer latency
+- Selectable lexical and dependency-free sparse concept-vector hybrid retrieval in the API and browser
+- Transparent compound-intent abstention diagnostics for accountability, authorization, and explicit conflict queries
+- Inspectable strong/supporting/weak relevance labels with deterministic tiered candidate reranking
+- Supporting-evidence admission only when it completes an uncovered query core concept and adds a new non-core anchor
+- Twelve-case comparison: hybrid Recall@3, MRR, and evidence-absence accuracy 1.00; lexical Recall@3 0.55 and combined absence accuracy 0.50
+- Hybrid challenge and combined grounded-answer precision and recall 1.00
+- Six-case context-policy adversarial suite: precision and recall 1.00 across nine cited claims
+- Eighteen-case SQLite-persisted hybrid comparison: quality parity, 0.1310 ms warm P95, and a 48 KiB index
+- Runtime hybrid index refresh on evidence upload, fingerprint cleanup, restart reuse, and API cache diagnostics
+- Explicit actor-attributed evidence deletion, last-source namespace cleanup, and optional SQLite compaction diagnostics
 
 ## Next implementation milestone
 
-- Document upload and text/PDF ingestion
-- Evidence panel with citations
-- Versioned evaluation dataset
-- Structured logging, request IDs, and latency measurements
+- Measure delete, refresh, and compaction behavior under concurrent larger-corpus workloads
+- Dense embedding comparison on a larger human-labeled set
+- Expand adversarial retrieval cases beyond the hand-authored concept map
+- Grounded-answer evaluation over the challenge suite with human usefulness labels
+- Optional model-backed answerer evaluated against the same citation contract
+- Durable metrics export and deployment monitoring
 - One deployed environment using synthetic data
+
+The current figures are engineering regression baselines over 12 synthetic
+cases, not production-quality or user-quality claims. The hybrid gate resolves
+the targeted compound-intent absence case, and tiered reranking removes the
+challenge distractors. Coverage-completing context selection restores the
+secondary support source while retaining 1.00 combined expected-source
+precision and recall. A separate six-case suite rejects generic coverage false
+friends while preserving valid completion, also at 1.00 precision and recall.
+The persisted index preserves retrieval quality and improves warm P95 from
+0.1550 ms to 0.1310 ms on 18 tiny cases. The API now refreshes the active
+workflow fingerprint after evidence uploads, reuses it across restarts, removes
+stale unreferenced corpora, and exposes index counters. Evidence deletion now
+refreshes or clears that workflow namespace, retains an attributed audit event,
+and can reclaim free SQLite pages when delete-time compaction is enabled.
+Larger-corpus concurrency measurement remains.
 
 ## Non-goals for the next milestone
 
