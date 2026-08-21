@@ -44,6 +44,7 @@ Full-stack approval workspace preview:
 - Coverage-completing supporting evidence admission with a non-core query anchor
 - Runtime SQLite hybrid index with corpus fingerprint invalidation, restart reuse, and stale-corpus cleanup
 - Actor-confirmed evidence deletion with namespace cleanup and optional SQLite compaction
+- Reproducible concurrent index lifecycle benchmark over 384 synthetic documents and 1,920 chunks
 - Evidence search in the API and React workspace, including ranked citations, matched terms, scores, and explicit no-evidence results
 - Deterministic extractive answers with claim-level citations, partial-evidence warnings, and abstention
 - Versioned synthetic evaluation data for grounded, missing-evidence, and conflicting-evidence cases
@@ -347,6 +348,7 @@ python scripts/evaluate_grounding.py \
   --strategy hybrid \
   --output evaluation/results/grounded_answer_context_policy_hybrid_v1.json
 python scripts/compare_persisted_hybrid.py
+python scripts/benchmark_index_lifecycle.py --workers 8
 ```
 
 The checked-in baseline result is
@@ -439,6 +441,19 @@ P95 per corpus; loading them after a retriever restart took 2.0261 ms total with
 0.1504 ms P95. The result measures a tiny synthetic local workload and does not
 predict database, concurrency, or large-corpus performance.
 
+The separate SQLite lifecycle benchmark scales the derived index to 384
+synthetic documents, 1.79 MB of source text, and 1,920 chunks across 12 workflow
+namespaces. Eight worker threads concurrently build the initial corpora,
+refresh all fingerprints, refresh again after removing eight documents from
+each namespace, reload 1,440 retained chunks after restart, and clear every
+last-source namespace. All lifecycle invariants passed with zero lock errors in
+the recorded run. Refresh P95 was 243.4680 ms, partial-delete refresh P95 was
+291.9091 ms, last-source cleanup P95 was 80.8783 ms, and post-cleanup `VACUUM`
+reclaimed 9,580,544 bytes in 1.5362 ms. These are single-process arm64 laptop
+measurements over repetitive synthetic text; they do not predict multi-host,
+remote-database, or production-document performance. `VACUUM` intentionally
+runs after concurrent writers quiesce because SQLite requires exclusive access.
+
 ## Example Saved Plan Response
 
 ```json
@@ -485,6 +500,7 @@ The saved-plan list endpoint also returns compact progress metadata such as `com
 - Coverage-completing context selection raises combined expected-source precision and recall to 1.00 by requiring an uncovered query core concept plus a new non-core anchor; a separate adversarial suite also scores 1.00 precision and recall.
 - The runtime hybrid index reuses fingerprinted chunks across restarts, records refresh audits, and removes stale unreferenced corpora; its SQLite file remains derived state rather than the source of truth.
 - Evidence deletion is immediate and audited; physical free-page reclamation is opt-in because running SQLite `VACUUM` for every deletion trades lower residual disk usage for a blocking index rewrite.
+- The lifecycle benchmark checks correctness under concurrent writers without enforcing timing thresholds in CI; latency and throughput remain hardware-specific observations.
 - Grounded answers are extractive rather than generative, making claim support mechanically verifiable while limiting fluency and cross-source synthesis.
 - The partial-evidence threshold is a documented heuristic, not a calibrated confidence probability.
 - The React workspace persists plans, drives step and approval decisions, and renders audit history without requiring a separate API client.
@@ -515,7 +531,6 @@ Suggested topics:
 
 - add calendar-aware due date handling
 - add user and team assignment rules
-- measure delete/refresh/compaction behavior under concurrent larger-corpus workloads
 - compare the sparse hybrid with a dense embedding on a larger human-labeled set
 - expand adversarial retrieval cases beyond the hand-authored concept map
 - add human usefulness labels to the challenge grounded-answer evaluation

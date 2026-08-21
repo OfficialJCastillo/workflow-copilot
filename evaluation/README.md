@@ -44,6 +44,7 @@ python scripts/evaluate_grounding.py \
   --strategy hybrid \
   --output evaluation/results/grounded_answer_context_policy_hybrid_v1.json
 python scripts/compare_persisted_hybrid.py
+python scripts/benchmark_index_lifecycle.py --workers 8
 ```
 
 The evaluator derives deterministic 120-word chunks with 30-word overlap, runs
@@ -146,6 +147,26 @@ overlap configuration, so changed evidence creates a new index entry. The API
 uses the same retriever with workflow namespaces, upload-time refresh, and
 logical stale-corpus cleanup. This benchmark still does not measure concurrent
 writes, physical SQLite compaction, large documents, or a remote database.
+
+## Concurrent index lifecycle baseline
+
+`results/index_lifecycle_concurrency_v1.json` exercises the derived SQLite
+index with 384 documents, 1.79 MB of source text, 1,920 chunks, 12 namespaces,
+and eight worker threads. It measures concurrent initial builds, full-corpus
+refreshes, partial-delete refreshes, restart loads, and last-source namespace
+cleanup. A final `VACUUM` runs only after concurrent writers finish.
+
+All recorded correctness invariants pass with zero lock errors. Refresh P95 is
+243.4680 ms, partial-delete refresh P95 is 291.9091 ms, restart-load P95 is
+44.1760 ms, and last-source cleanup P95 is 80.8783 ms. Logical cleanup leaves
+zero namespaces, corpora, and chunks; compaction reduces the 9,613,312-byte
+file to 32,768 bytes, reclaiming 9,580,544 bytes in 1.5362 ms.
+
+This is a deterministic synthetic workload and a single recorded timing run on
+the environment embedded in the result. It does not model multiple processes,
+multiple hosts, production document diversity, or a remote database. CI asserts
+the lifecycle invariants and absence of operation errors, but deliberately does
+not assert timing or throughput thresholds.
 
 ## Grounded-answer baseline
 

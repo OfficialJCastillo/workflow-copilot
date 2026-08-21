@@ -59,10 +59,10 @@ A platform team is preparing a customer-facing API release. The original request
 - Eighteen-case SQLite-persisted hybrid comparison: quality parity, 0.1310 ms warm P95, and a 48 KiB index
 - Runtime hybrid index refresh on evidence upload, fingerprint cleanup, restart reuse, and API cache diagnostics
 - Explicit actor-attributed evidence deletion, last-source namespace cleanup, and optional SQLite compaction diagnostics
+- Eight-worker lifecycle benchmark over 384 documents and 1,920 chunks with zero recorded lock errors and complete cleanup invariants
 
 ## Next implementation milestone
 
-- Measure delete, refresh, and compaction behavior under concurrent larger-corpus workloads
 - Dense embedding comparison on a larger human-labeled set
 - Expand adversarial retrieval cases beyond the hand-authored concept map
 - Grounded-answer evaluation over the challenge suite with human usefulness labels
@@ -83,7 +83,10 @@ workflow fingerprint after evidence uploads, reuses it across restarts, removes
 stale unreferenced corpora, and exposes index counters. Evidence deletion now
 refreshes or clears that workflow namespace, retains an attributed audit event,
 and can reclaim free SQLite pages when delete-time compaction is enabled.
-Larger-corpus concurrency measurement remains.
+The larger lifecycle fixture now verifies concurrent build, refresh,
+partial-delete refresh, restart load, last-source cleanup, and exclusive
+compaction over 384 synthetic documents. Dense retrieval and human-labeled
+quality measurement remain.
 
 ## Non-goals for the next milestone
 
