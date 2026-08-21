@@ -481,6 +481,25 @@ and 0.40 lower in absence accuracy, with MRR 0.02 higher. The recorded
 environment. The promotion gate therefore retains sparse hybrid and recommends
 evaluating dense candidate fusion rather than replacing production retrieval.
 
+The follow-up gated-fusion comparison preserves sparse compound-intent
+abstentions, combines 85% dense similarity with 15% query-normalized sparse
+score, and requires explicit answer-slot support for authorization-actor and
+outcome-status questions. Run it in the same optional environment with:
+
+```bash
+/tmp/workflow-dense-venv/bin/python scripts/compare_fusion_retrieval.py \
+  --cache-dir /tmp/workflow-dense-model-cache
+```
+
+On the six-case candidate evaluation split, fusion records 1.00 Recall@3, MRR,
+and absence accuracy versus sparse 0.70, 0.4667, and 0.00. Across all 30 cases,
+fusion records 0.98 Recall@3, 0.98 MRR, and 1.00 absence accuracy versus sparse
+0.94, 0.8733, and 0.60. Candidate-evaluation fusion P95 is 12.5792 ms versus
+0.2118 ms sparse. These measurements are not a promotion result: the labels
+remain pending human review, and the evaluation cases were inspected while the
+gate was designed, so the result explicitly reports that split as non-blind.
+Fusion remains evaluation-only until it passes an untouched human-reviewed set.
+
 ## Example Saved Plan Response
 
 ```json
@@ -529,6 +548,7 @@ The saved-plan list endpoint also returns compact progress metadata such as `com
 - Evidence deletion is immediate and audited; physical free-page reclamation is opt-in because running SQLite `VACUUM` for every deletion trades lower residual disk usage for a blocking index rewrite.
 - The lifecycle benchmark checks correctness under concurrent writers without enforcing timing thresholds in CI; latency and throughput remain hardware-specific observations.
 - Dense retrieval is evaluation-only and optional: the pinned model improves held-out paraphrase ranking but currently regresses absence handling and expanded-suite recall, so it is not wired into the API.
+- Gated sparse/dense fusion improves every measured quality metric on the inspected synthetic suite, but remains evaluation-only because the labels are not human-reviewed and the evaluation split is no longer blind.
 - Grounded answers are extractive rather than generative, making claim support mechanically verifiable while limiting fluency and cross-source synthesis.
 - The partial-evidence threshold is a documented heuristic, not a calibrated confidence probability.
 - The React workspace persists plans, drives step and approval decisions, and renders audit history without requiring a separate API client.
@@ -560,7 +580,7 @@ Suggested topics:
 - add calendar-aware due date handling
 - add user and team assignment rules
 - obtain human review for the 12 candidate relevance-judgment cases
-- evaluate sparse/dense candidate fusion with an explicit evidence-sufficiency gate
+- validate gated sparse/dense fusion on an untouched human-reviewed set
 - expand adversarial retrieval cases beyond the hand-authored concept map
 - add human usefulness labels to the challenge grounded-answer evaluation
 - compare extractive grounding with an optional model-backed answerer behind the same citation contract

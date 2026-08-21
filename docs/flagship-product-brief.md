@@ -61,11 +61,12 @@ A platform team is preparing a customer-facing API release. The original request
 - Explicit actor-attributed evidence deletion, last-source namespace cleanup, and optional SQLite compaction diagnostics
 - Eight-worker lifecycle benchmark over 384 documents and 1,920 chunks with zero recorded lock errors and complete cleanup invariants
 - Optional 30-case sparse/dense comparison with development/test splits, explicit pending-human-review labels, and a failed production-promotion gate
+- Evaluation-only gated fusion improves the inspected 30-case suite to 0.98 Recall@3, 0.98 MRR, and 1.00 absence accuracy while explicitly failing human-review and blind-test gates
 
 ## Next implementation milestone
 
 - Human review for the 12 candidate-labelled dense comparison cases
-- Sparse/dense candidate fusion with an explicit evidence-sufficiency gate
+- Validation of gated sparse/dense fusion on an untouched human-reviewed set
 - Expand adversarial retrieval cases beyond the hand-authored concept map
 - Grounded-answer evaluation over the challenge suite with human usefulness labels
 - Optional model-backed answerer evaluated against the same citation contract
@@ -90,7 +91,9 @@ partial-delete refresh, restart load, last-source cleanup, and exclusive
 compaction over 384 synthetic documents. The first optional dense run improves
 held-out paraphrase recall but regresses absence handling and expanded-suite
 recall, so the API retains sparse hybrid retrieval. Human review and a fusion
-evaluation remain.
+evaluation remain. A follow-up gated fusion run improves the inspected suite's
+quality metrics, but it is not promotion evidence because its labels are still
+synthetic candidates and its evaluation cases were visible during gate design.
 
 ## Non-goals for the next milestone
 

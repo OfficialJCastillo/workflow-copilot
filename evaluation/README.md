@@ -197,6 +197,27 @@ Across all 30 synthetic cases, dense Recall@3 is 0.90 versus sparse 0.94 and
 absence accuracy is 0.20 versus 0.60. The promotion gate fails, so dense remains
 evaluation-only while candidate fusion and human label review are pending.
 
+## Gated sparse/dense fusion comparison
+
+`results/fusion_retrieval_candidate_comparison_v1.json` evaluates an optional
+85% dense / 15% normalized-sparse score fusion. It preserves the V3 sparse
+compound-intent abstention and adds transparent answer-slot gates requiring
+explicit authorization or completed-outcome support for matching questions.
+Run `scripts/compare_fusion_retrieval.py` in the same isolated FastEmbed
+environment documented above.
+
+The six-case candidate evaluation split records 1.00 Recall@3, MRR, and absence
+accuracy for fusion versus sparse 0.70, 0.4667, and 0.00. Across all 30 cases,
+fusion records 0.98 Recall@3, 0.98 MRR, and 1.00 absence accuracy versus sparse
+0.94, 0.8733, and 0.60. Candidate-evaluation P95 is 12.5792 ms for fusion and
+0.2118 ms for sparse with fresh dense query inference.
+
+This result is deliberately not called held-out: its source split is named
+`test`, but those cases were inspected during gate design. All 12 relevance
+judgments also remain pending human review. The recorded production gate fails
+on those two integrity checks even though its provisional quality and latency
+checks pass.
+
 ## Grounded-answer baseline
 
 The deterministic answerer extracts up to five cited claims from the top three
