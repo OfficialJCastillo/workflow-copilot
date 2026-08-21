@@ -349,6 +349,8 @@ python scripts/evaluate_grounding.py \
   --output evaluation/results/grounded_answer_context_policy_hybrid_v1.json
 python scripts/compare_persisted_hybrid.py
 python scripts/benchmark_index_lifecycle.py --workers 8
+python scripts/validate_evaluation_dataset.py \
+  evaluation/datasets/workflow_evidence_dense_candidate_v1.jsonl
 ```
 
 The checked-in baseline result is
@@ -454,6 +456,31 @@ measurements over repetitive synthetic text; they do not predict multi-host,
 remote-database, or production-document performance. `VACUUM` intentionally
 runs after concurrent writers quiesce because SQLite requires exclusive access.
 
+The optional dense comparison adds 12 candidate-labelled paraphrase,
+distractor, conflict, and absence cases, split evenly between development and
+held-out test sets. All new judgments are explicitly
+`pending_human_review`; none are presented as human-validated. The comparison
+uses `sentence-transformers/all-MiniLM-L6-v2` through pinned
+`fastembed==0.8.0` in a separate environment, so the API requirements and
+container remain unchanged:
+
+```bash
+python3 -m venv /tmp/workflow-dense-venv
+/tmp/workflow-dense-venv/bin/pip install -r requirements-dense-eval.txt
+/tmp/workflow-dense-venv/bin/python scripts/compare_dense_retrieval.py \
+  --cache-dir /tmp/workflow-dense-model-cache
+```
+
+The checked-in candidate result covers 30 synthetic cases. On the six held-out
+candidate cases, dense Recall@3/MRR is 1.00/1.00 versus 0.70/0.4667 for sparse
+hybrid, but both score 0.00 evidence-absence accuracy. Dense P95 is 12.0740 ms
+with fresh query inference versus 0.1641 ms for sparse, and its six-corpus
+prewarm takes 243.8099 ms. Across all 30 cases, dense is 0.04 lower in Recall@3
+and 0.40 lower in absence accuracy, with MRR 0.02 higher. The recorded
+91,104,057-byte model cache is optional and removable with the temporary
+environment. The promotion gate therefore retains sparse hybrid and recommends
+evaluating dense candidate fusion rather than replacing production retrieval.
+
 ## Example Saved Plan Response
 
 ```json
@@ -501,6 +528,7 @@ The saved-plan list endpoint also returns compact progress metadata such as `com
 - The runtime hybrid index reuses fingerprinted chunks across restarts, records refresh audits, and removes stale unreferenced corpora; its SQLite file remains derived state rather than the source of truth.
 - Evidence deletion is immediate and audited; physical free-page reclamation is opt-in because running SQLite `VACUUM` for every deletion trades lower residual disk usage for a blocking index rewrite.
 - The lifecycle benchmark checks correctness under concurrent writers without enforcing timing thresholds in CI; latency and throughput remain hardware-specific observations.
+- Dense retrieval is evaluation-only and optional: the pinned model improves held-out paraphrase ranking but currently regresses absence handling and expanded-suite recall, so it is not wired into the API.
 - Grounded answers are extractive rather than generative, making claim support mechanically verifiable while limiting fluency and cross-source synthesis.
 - The partial-evidence threshold is a documented heuristic, not a calibrated confidence probability.
 - The React workspace persists plans, drives step and approval decisions, and renders audit history without requiring a separate API client.
@@ -531,7 +559,8 @@ Suggested topics:
 
 - add calendar-aware due date handling
 - add user and team assignment rules
-- compare the sparse hybrid with a dense embedding on a larger human-labeled set
+- obtain human review for the 12 candidate relevance-judgment cases
+- evaluate sparse/dense candidate fusion with an explicit evidence-sufficiency gate
 - expand adversarial retrieval cases beyond the hand-authored concept map
 - add human usefulness labels to the challenge grounded-answer evaluation
 - compare extractive grounding with an optional model-backed answerer behind the same citation contract

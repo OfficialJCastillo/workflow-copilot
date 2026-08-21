@@ -60,10 +60,12 @@ A platform team is preparing a customer-facing API release. The original request
 - Runtime hybrid index refresh on evidence upload, fingerprint cleanup, restart reuse, and API cache diagnostics
 - Explicit actor-attributed evidence deletion, last-source namespace cleanup, and optional SQLite compaction diagnostics
 - Eight-worker lifecycle benchmark over 384 documents and 1,920 chunks with zero recorded lock errors and complete cleanup invariants
+- Optional 30-case sparse/dense comparison with development/test splits, explicit pending-human-review labels, and a failed production-promotion gate
 
 ## Next implementation milestone
 
-- Dense embedding comparison on a larger human-labeled set
+- Human review for the 12 candidate-labelled dense comparison cases
+- Sparse/dense candidate fusion with an explicit evidence-sufficiency gate
 - Expand adversarial retrieval cases beyond the hand-authored concept map
 - Grounded-answer evaluation over the challenge suite with human usefulness labels
 - Optional model-backed answerer evaluated against the same citation contract
@@ -85,8 +87,10 @@ refreshes or clears that workflow namespace, retains an attributed audit event,
 and can reclaim free SQLite pages when delete-time compaction is enabled.
 The larger lifecycle fixture now verifies concurrent build, refresh,
 partial-delete refresh, restart load, last-source cleanup, and exclusive
-compaction over 384 synthetic documents. Dense retrieval and human-labeled
-quality measurement remain.
+compaction over 384 synthetic documents. The first optional dense run improves
+held-out paraphrase recall but regresses absence handling and expanded-suite
+recall, so the API retains sparse hybrid retrieval. Human review and a fusion
+evaluation remain.
 
 ## Non-goals for the next milestone
 

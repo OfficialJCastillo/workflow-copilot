@@ -13,6 +13,11 @@ adversarial suite for coverage-completing answer context. It includes valid
 support coverage, generic coverage false friends, redundant support, and
 compound-intent absence cases.
 
+`datasets/workflow_evidence_dense_candidate_v1.jsonl` adds 12 candidate-labelled
+cases with development/test splits and per-source relevance judgments. Every
+label is marked `synthetic_candidate` and `pending_human_review`; this dataset
+must not be described as human-labelled until the review fields change.
+
 Each JSONL record defines:
 
 - a stable case ID and expected workflow type
@@ -45,6 +50,7 @@ python scripts/evaluate_grounding.py \
   --output evaluation/results/grounded_answer_context_policy_hybrid_v1.json
 python scripts/compare_persisted_hybrid.py
 python scripts/benchmark_index_lifecycle.py --workers 8
+python scripts/validate_evaluation_dataset.py evaluation/datasets/workflow_evidence_dense_candidate_v1.jsonl
 ```
 
 The evaluator derives deterministic 120-word chunks with 30-word overlap, runs
@@ -167,6 +173,29 @@ the environment embedded in the result. It does not model multiple processes,
 multiple hosts, production document diversity, or a remote database. CI asserts
 the lifecycle invariants and absence of operation errors, but deliberately does
 not assert timing or throughput thresholds.
+
+## Dense retrieval candidate comparison
+
+`results/dense_retrieval_candidate_comparison_v1.json` compares the V3 sparse
+hybrid with 384-dimensional `sentence-transformers/all-MiniLM-L6-v2`
+embeddings. Threshold selection uses only the six development cases; the six
+test cases remain held out until final measurement. Install the optional,
+pinned dependency outside the production environment:
+
+```bash
+python3 -m venv /tmp/workflow-dense-venv
+/tmp/workflow-dense-venv/bin/pip install -r requirements-dense-eval.txt
+/tmp/workflow-dense-venv/bin/python scripts/compare_dense_retrieval.py \
+  --cache-dir /tmp/workflow-dense-model-cache
+```
+
+Held-out dense Recall@3/MRR is 1.00/1.00 versus sparse 0.70/0.4667. Both score
+0.00 absence accuracy, showing that the calibrated cosine threshold does not
+establish evidence sufficiency. Dense P95 with fresh query embeddings is
+12.0740 ms versus sparse 0.1641 ms; six-corpus dense prewarm is 243.8099 ms.
+Across all 30 synthetic cases, dense Recall@3 is 0.90 versus sparse 0.94 and
+absence accuracy is 0.20 versus 0.60. The promotion gate fails, so dense remains
+evaluation-only while candidate fusion and human label review are pending.
 
 ## Grounded-answer baseline
 

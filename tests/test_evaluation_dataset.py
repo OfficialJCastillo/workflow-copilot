@@ -10,6 +10,12 @@ CONTEXT_POLICY_DATASET = (
     / "datasets"
     / "workflow_evidence_context_policy_v1.jsonl"
 )
+DENSE_CANDIDATE_DATASET = (
+    Path(__file__).resolve().parents[1]
+    / "evaluation"
+    / "datasets"
+    / "workflow_evidence_dense_candidate_v1.jsonl"
+)
 
 
 def test_versioned_evaluation_dataset_is_valid_and_varied() -> None:
@@ -36,3 +42,19 @@ def test_context_policy_dataset_is_valid_and_adversarial() -> None:
         "redundant_support",
     }
     assert sum(not record["expected_evidence"] for record in records) == 1
+
+
+def test_dense_candidate_dataset_is_split_and_awaits_human_review() -> None:
+    records = load_and_validate_dataset(DENSE_CANDIDATE_DATASET)
+
+    assert len(records) == 12
+    assert {record["split"] for record in records} == {"development", "test"}
+    assert sum(record["split"] == "development" for record in records) == 6
+    assert sum(record["split"] == "test" for record in records) == 6
+    assert {record["label_provenance"] for record in records} == {
+        "synthetic_candidate"
+    }
+    assert {record["label_status"] for record in records} == {
+        "pending_human_review"
+    }
+    assert sum(not record["expected_evidence"] for record in records) == 2

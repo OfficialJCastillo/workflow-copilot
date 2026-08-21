@@ -31,6 +31,9 @@ REQUIRED_FIELDS = {
     "difficulty",
     "expected_behavior",
 }
+LABEL_PROVENANCE = {"synthetic_candidate", "human_reviewed"}
+LABEL_STATUSES = {"pending_human_review", "reviewed"}
+DATASET_SPLITS = {"development", "test"}
 
 
 def load_and_validate_dataset(path: Path) -> list[dict[str, object]]:
@@ -90,6 +93,49 @@ def load_and_validate_dataset(path: Path) -> list[dict[str, object]]:
         challenge_type = record.get("challenge_type")
         if challenge_type is not None and challenge_type not in CHALLENGE_TYPES:
             raise ValueError(f"Line {line_number} has an unsupported challenge_type.")
+
+        label_fields = {
+            "label_provenance",
+            "label_status",
+            "split",
+            "relevance_judgments",
+        }
+        if label_fields & set(record):
+            missing_label_fields = label_fields - set(record)
+            if missing_label_fields:
+                raise ValueError(
+                    f"Line {line_number} is missing label fields: "
+                    f"{', '.join(sorted(missing_label_fields))}."
+                )
+            if record["label_provenance"] not in LABEL_PROVENANCE:
+                raise ValueError(f"Line {line_number} has invalid label provenance.")
+            if record["label_status"] not in LABEL_STATUSES:
+                raise ValueError(f"Line {line_number} has invalid label status.")
+            if record["split"] not in DATASET_SPLITS:
+                raise ValueError(f"Line {line_number} has invalid dataset split.")
+            judgments = record["relevance_judgments"]
+            if not isinstance(judgments, dict) or set(judgments) != source_ids:
+                raise ValueError(
+                    f"Line {line_number} must judge every evidence source exactly once."
+                )
+            if any(value not in {0, 1, 2} for value in judgments.values()):
+                raise ValueError(f"Line {line_number} has invalid relevance judgments.")
+            judged_relevant = {
+                source_id
+                for source_id, value in judgments.items()
+                if value == 2
+            }
+            if judged_relevant != set(expected_evidence):
+                raise ValueError(
+                    f"Line {line_number} expected evidence must match relevance-2 labels."
+                )
+            if (
+                record["label_provenance"] == "human_reviewed"
+                and record["label_status"] != "reviewed"
+            ):
+                raise ValueError(
+                    f"Line {line_number} has inconsistent human-review status."
+                )
 
         records.append(record)
 
