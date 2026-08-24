@@ -1,0 +1,177 @@
+{
+  "all_invariants_passed": true,
+  "environment": {
+    "machine": "arm64",
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "python": "3.13.3",
+    "sqlite": "3.49.1"
+  },
+  "invariants": {
+    "clear_completed_without_errors": true,
+    "clear_removed_all_corpora_and_chunks": true,
+    "clear_removed_all_namespaces": true,
+    "compaction_did_not_grow_index": true,
+    "delete_refresh_completed_without_errors": true,
+    "delete_refresh_pruned_previous_corpora": true,
+    "delete_refresh_removed_expected_chunks": true,
+    "initial_build_completed_without_errors": true,
+    "initial_chunk_count_matches": true,
+    "initial_corpus_count_matches": true,
+    "initial_namespace_count_matches": true,
+    "refresh_completed_without_errors": true,
+    "refresh_namespace_count_matches": true,
+    "refresh_pruned_previous_corpora": true,
+    "restart_load_completed_without_errors": true,
+    "restart_loaded_all_chunks": true
+  },
+  "limitations": [
+    "Synthetic text does not represent production document diversity.",
+    "Thread concurrency in one Python process does not model multiple hosts.",
+    "SQLite serializes writers; throughput is not a remote-database claim.",
+    "VACUUM runs after concurrent writers finish because it requires exclusive access.",
+    "Latency is environment-specific and is not asserted in CI."
+  ],
+  "methodology": {
+    "chunk_words": 120,
+    "compaction_policy": "after_concurrent_writers_quiesce",
+    "corpus": "deterministic_synthetic",
+    "initial_revision": 1,
+    "overlap_words": 30,
+    "refresh_revision": 2
+  },
+  "phases": {
+    "concurrent_clear": {
+      "error_count": 0,
+      "error_types": {},
+      "operation_latency_ms": {
+        "maximum": 96.4279,
+        "p50": 18.462,
+        "p95": 80.8783,
+        "sample_count": 12,
+        "total": 361.2073
+      },
+      "requested_operations": 12,
+      "success_count": 12,
+      "throughput_operations_per_second": 123.5172,
+      "wall_clock_ms": 97.1525,
+      "worker_count": 8
+    },
+    "concurrent_delete_refresh": {
+      "error_count": 0,
+      "error_types": {},
+      "operation_latency_ms": {
+        "maximum": 323.3343,
+        "p50": 107.6393,
+        "p95": 291.9091,
+        "sample_count": 12,
+        "total": 1449.5562
+      },
+      "requested_operations": 12,
+      "success_count": 12,
+      "throughput_operations_per_second": 36.9613,
+      "wall_clock_ms": 324.6637,
+      "worker_count": 8
+    },
+    "concurrent_initial_build": {
+      "error_count": 0,
+      "error_types": {},
+      "operation_latency_ms": {
+        "maximum": 224.0141,
+        "p50": 90.1047,
+        "p95": 205.0625,
+        "sample_count": 12,
+        "total": 1221.3794
+      },
+      "requested_operations": 12,
+      "success_count": 12,
+      "throughput_operations_per_second": 53.3804,
+      "wall_clock_ms": 224.8017,
+      "worker_count": 8
+    },
+    "concurrent_refresh": {
+      "error_count": 0,
+      "error_types": {},
+      "operation_latency_ms": {
+        "maximum": 275.1006,
+        "p50": 102.0147,
+        "p95": 243.468,
+        "sample_count": 12,
+        "total": 1350.4544
+      },
+      "requested_operations": 12,
+      "success_count": 12,
+      "throughput_operations_per_second": 43.3094,
+      "wall_clock_ms": 277.0762,
+      "worker_count": 8
+    },
+    "concurrent_restart_load": {
+      "error_count": 0,
+      "error_types": {},
+      "loaded_chunk_count": 1440,
+      "operation_latency_ms": {
+        "maximum": 44.4225,
+        "p50": 34.4781,
+        "p95": 44.176,
+        "sample_count": 12,
+        "total": 369.7579
+      },
+      "requested_operations": 12,
+      "success_count": 12,
+      "throughput_operations_per_second": 220.9438,
+      "wall_clock_ms": 54.3125,
+      "worker_count": 8
+    },
+    "exclusive_compaction": {
+      "after_bytes": 32768,
+      "before_bytes": 9613312,
+      "operation_latency_ms": 1.5362,
+      "reclaimed_bytes": 9580544
+    }
+  },
+  "schema_version": 1,
+  "states": {
+    "after_clear": {
+      "index_size_bytes": 9613312,
+      "indexed_chunk_count": 0,
+      "indexed_corpus_count": 0,
+      "indexed_namespace_count": 0,
+      "removed_corpus_count": 12,
+      "removed_namespace_count": 12
+    },
+    "after_delete_refresh": {
+      "index_size_bytes": 9613312,
+      "indexed_chunk_count": 1440,
+      "indexed_corpus_count": 12,
+      "indexed_namespace_count": 12,
+      "removed_corpus_count": 12
+    },
+    "after_initial_build": {
+      "index_size_bytes": 8249344,
+      "indexed_chunk_count": 1920,
+      "indexed_corpus_count": 12,
+      "indexed_namespace_count": 12
+    },
+    "after_refresh": {
+      "index_size_bytes": 9613312,
+      "indexed_chunk_count": 1920,
+      "indexed_corpus_count": 12,
+      "indexed_namespace_count": 12,
+      "removed_corpus_count": 12
+    },
+    "size_before_clear_bytes": 9613312
+  },
+  "suite": "sqlite_index_lifecycle_concurrency_v1",
+  "workload": {
+    "chunks_per_namespace": 160,
+    "documents_per_namespace": 32,
+    "documents_removed_per_namespace": 8,
+    "expected_chunks_after_delete": 1440,
+    "expected_total_chunks": 1920,
+    "namespace_count": 12,
+    "retained_documents_per_namespace": 24,
+    "total_documents": 384,
+    "total_source_bytes": 1785600,
+    "words_per_document": 480,
+    "worker_count": 8
+  }
+}

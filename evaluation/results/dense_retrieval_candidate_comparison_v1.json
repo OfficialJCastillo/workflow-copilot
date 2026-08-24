@@ -1,0 +1,1886 @@
+{
+  "candidate_case_count": 12,
+  "case_count": 30,
+  "dense_model": {
+    "embedding_dimension": 384,
+    "model_cache_size_bytes": 91104057,
+    "name": "sentence-transformers/all-MiniLM-L6-v2",
+    "production_dependency": false,
+    "runtime_dependency": "fastembed==0.8.0"
+  },
+  "development_case_count": 6,
+  "existing_synthetic_case_count": 18,
+  "held_out_test_case_count": 6,
+  "labels": {
+    "candidate_case_count": 12,
+    "claim_status": "candidate_only_not_human_validated",
+    "human_review_gate_passed": false,
+    "human_reviewed_case_count": 0,
+    "legacy_synthetic_case_count": 18,
+    "pending_human_review_case_count": 12
+  },
+  "latency_methodology": {
+    "corpus_embeddings": "precomputed_before_measured_search",
+    "model_loading": "excluded",
+    "query_embeddings": "fresh_inference_on_every_measured_search"
+  },
+  "production_decision": {
+    "checks": {
+      "candidate_labels_human_reviewed": false,
+      "expanded_recall_not_worse_than_sparse": false,
+      "held_out_absence_accuracy_at_least_0_8": false,
+      "held_out_dense_p95_below_50_ms": true
+    },
+    "promotion_gate_passed": false,
+    "recommendation": "retain_sparse_hybrid_and_evaluate_dense_candidate_fusion"
+  },
+  "runs_per_case": 10,
+  "schema_version": 1,
+  "slices": {
+    "candidate_combined": {
+      "dense_corpus_prewarm": {
+        "chunk_count": 48,
+        "corpus_count": 12,
+        "latency_ms": 482.4014
+      },
+      "quality_delta_dense_minus_sparse": {
+        "evidence_absence_accuracy": 0.0,
+        "mean_reciprocal_rank": 0.3167,
+        "source_recall_at_k": 0.15
+      },
+      "results": {
+        "dense": {
+          "case_count": 12,
+          "cases": [
+            {
+              "case_id": "change-freeze-019",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "change-control-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "change-control-policy",
+                "blackout-calendar"
+              ]
+            },
+            {
+              "case_id": "retention-erasure-020",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "retention-standard"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "retention-standard",
+                "customer-directory",
+                "offboarding-checklist"
+              ]
+            },
+            {
+              "case_id": "supplier-insurance-021",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "supplier-terms"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "supplier-terms",
+                "vendor-catalog",
+                "insurance-directory"
+              ]
+            },
+            {
+              "case_id": "incident-notification-022",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-communications"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-communications",
+                "service-calendar"
+              ]
+            },
+            {
+              "case_id": "contractor-screening-023",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "contractor-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "contractor-policy",
+                "credential-inventory",
+                "screening-calendar"
+              ]
+            },
+            {
+              "case_id": "residency-exception-024",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "residency-policy",
+                "region-inventory",
+                "exception-template"
+              ]
+            },
+            {
+              "case_id": "recovery-objectives-025",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "recovery-plan",
+                "payments-roadmap",
+                "recovery-training"
+              ]
+            },
+            {
+              "case_id": "purchase-signoff-026",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "spending-authority"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "spending-authority"
+              ]
+            },
+            {
+              "case_id": "release-accessibility-027",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "accessibility-gate"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "accessibility-gate",
+                "interface-inventory",
+                "launch-calendar"
+              ]
+            },
+            {
+              "case_id": "departure-revocation-028",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "offboarding-security"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "offboarding-security",
+                "departure-calendar",
+                "credential-style"
+              ]
+            },
+            {
+              "case_id": "retention-conflict-029",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "dpa-signed",
+                "security-addendum"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "dpa-signed",
+                "security-addendum",
+                "supplier-directory"
+              ]
+            },
+            {
+              "case_id": "penetration-result-030",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "security-schedule",
+                "finding-template",
+                "testing-roster"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 10,
+          "dataset": "candidate_combined",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 14.6698,
+            "p50": 11.4592,
+            "p95": 12.8938,
+            "sample_count": 120
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.0,
+            "mean_reciprocal_rank": 1.0,
+            "source_recall_at_k": 1.0
+          },
+          "retriever": "dense_cosine_threshold_v1",
+          "schema_version": 1,
+          "top_k": 3
+        },
+        "sparse_hybrid": {
+          "case_count": 12,
+          "cases": [
+            {
+              "case_id": "change-freeze-019",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "change-control-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "change-control-policy",
+                "blackout-calendar",
+                "production-inventory"
+              ]
+            },
+            {
+              "case_id": "retention-erasure-020",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "retention-standard"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "retention-standard"
+              ]
+            },
+            {
+              "case_id": "supplier-insurance-021",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "supplier-terms"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "supplier-terms",
+                "ordering-guide"
+              ]
+            },
+            {
+              "case_id": "incident-notification-022",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-communications"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "service-calendar",
+                "incident-communications"
+              ]
+            },
+            {
+              "case_id": "contractor-screening-023",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "contractor-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "contractor-policy",
+                "screening-calendar"
+              ]
+            },
+            {
+              "case_id": "residency-exception-024",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "residency-policy",
+                "executive-directory",
+                "exception-template"
+              ]
+            },
+            {
+              "case_id": "recovery-objectives-025",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "payments-roadmap",
+                "recovery-plan"
+              ]
+            },
+            {
+              "case_id": "purchase-signoff-026",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "spending-authority"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "purchase-catalog",
+                "spending-authority"
+              ]
+            },
+            {
+              "case_id": "release-accessibility-027",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "accessibility-gate"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "accessibility-gate",
+                "interface-inventory"
+              ]
+            },
+            {
+              "case_id": "departure-revocation-028",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "offboarding-security"
+              ],
+              "recall_at_k": 0.0,
+              "reciprocal_rank": 0.0,
+              "retrieved_sources": [
+                "application-catalog"
+              ]
+            },
+            {
+              "case_id": "retention-conflict-029",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "dpa-signed",
+                "security-addendum"
+              ],
+              "recall_at_k": 0.5,
+              "reciprocal_rank": 0.3333333333333333,
+              "retrieved_sources": [
+                "supplier-directory",
+                "deletion-runbook",
+                "security-addendum"
+              ]
+            },
+            {
+              "case_id": "penetration-result-030",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "security-schedule",
+                "release-inventory"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 10,
+          "dataset": "candidate_combined",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 0.4013,
+            "p50": 0.1232,
+            "p95": 0.2096,
+            "sample_count": 120
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.0,
+            "mean_reciprocal_rank": 0.6833,
+            "source_recall_at_k": 0.85
+          },
+          "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+          "schema_version": 1,
+          "top_k": 3
+        }
+      }
+    },
+    "candidate_development": {
+      "dense_corpus_prewarm": {
+        "chunk_count": 24,
+        "corpus_count": 6,
+        "latency_ms": 242.8402
+      },
+      "quality_delta_dense_minus_sparse": {
+        "evidence_absence_accuracy": 0.0,
+        "mean_reciprocal_rank": 0.1,
+        "source_recall_at_k": 0.0
+      },
+      "results": {
+        "dense": {
+          "case_count": 6,
+          "cases": [
+            {
+              "case_id": "change-freeze-019",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "change-control-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "change-control-policy",
+                "blackout-calendar"
+              ]
+            },
+            {
+              "case_id": "retention-erasure-020",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "retention-standard"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "retention-standard",
+                "customer-directory",
+                "offboarding-checklist"
+              ]
+            },
+            {
+              "case_id": "supplier-insurance-021",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "supplier-terms"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "supplier-terms",
+                "vendor-catalog",
+                "insurance-directory"
+              ]
+            },
+            {
+              "case_id": "incident-notification-022",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-communications"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-communications",
+                "service-calendar"
+              ]
+            },
+            {
+              "case_id": "contractor-screening-023",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "contractor-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "contractor-policy",
+                "credential-inventory",
+                "screening-calendar"
+              ]
+            },
+            {
+              "case_id": "residency-exception-024",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "residency-policy",
+                "region-inventory",
+                "exception-template"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 5,
+          "dataset": "candidate_development",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 14.0949,
+            "p50": 11.4431,
+            "p95": 13.0672,
+            "sample_count": 60
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.0,
+            "mean_reciprocal_rank": 1.0,
+            "source_recall_at_k": 1.0
+          },
+          "retriever": "dense_cosine_threshold_v1",
+          "schema_version": 1,
+          "top_k": 3
+        },
+        "sparse_hybrid": {
+          "case_count": 6,
+          "cases": [
+            {
+              "case_id": "change-freeze-019",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "change-control-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "change-control-policy",
+                "blackout-calendar",
+                "production-inventory"
+              ]
+            },
+            {
+              "case_id": "retention-erasure-020",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "retention-standard"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "retention-standard"
+              ]
+            },
+            {
+              "case_id": "supplier-insurance-021",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "supplier-terms"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "supplier-terms",
+                "ordering-guide"
+              ]
+            },
+            {
+              "case_id": "incident-notification-022",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-communications"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "service-calendar",
+                "incident-communications"
+              ]
+            },
+            {
+              "case_id": "contractor-screening-023",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "contractor-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "contractor-policy",
+                "screening-calendar"
+              ]
+            },
+            {
+              "case_id": "residency-exception-024",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "residency-policy",
+                "executive-directory",
+                "exception-template"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 5,
+          "dataset": "candidate_development",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 0.536,
+            "p50": 0.1269,
+            "p95": 0.1748,
+            "sample_count": 60
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.0,
+            "mean_reciprocal_rank": 0.9,
+            "source_recall_at_k": 1.0
+          },
+          "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+          "schema_version": 1,
+          "top_k": 3
+        }
+      }
+    },
+    "candidate_test": {
+      "dense_corpus_prewarm": {
+        "chunk_count": 24,
+        "corpus_count": 6,
+        "latency_ms": 243.8099
+      },
+      "quality_delta_dense_minus_sparse": {
+        "evidence_absence_accuracy": 0.0,
+        "mean_reciprocal_rank": 0.5333,
+        "source_recall_at_k": 0.3
+      },
+      "results": {
+        "dense": {
+          "case_count": 6,
+          "cases": [
+            {
+              "case_id": "recovery-objectives-025",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "recovery-plan",
+                "payments-roadmap",
+                "recovery-training"
+              ]
+            },
+            {
+              "case_id": "purchase-signoff-026",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "spending-authority"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "spending-authority"
+              ]
+            },
+            {
+              "case_id": "release-accessibility-027",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "accessibility-gate"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "accessibility-gate",
+                "interface-inventory",
+                "launch-calendar"
+              ]
+            },
+            {
+              "case_id": "departure-revocation-028",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "offboarding-security"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "offboarding-security",
+                "departure-calendar",
+                "credential-style"
+              ]
+            },
+            {
+              "case_id": "retention-conflict-029",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "dpa-signed",
+                "security-addendum"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "dpa-signed",
+                "security-addendum",
+                "supplier-directory"
+              ]
+            },
+            {
+              "case_id": "penetration-result-030",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "security-schedule",
+                "finding-template",
+                "testing-roster"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 5,
+          "dataset": "candidate_test",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 13.9326,
+            "p50": 11.4262,
+            "p95": 12.074,
+            "sample_count": 60
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.0,
+            "mean_reciprocal_rank": 1.0,
+            "source_recall_at_k": 1.0
+          },
+          "retriever": "dense_cosine_threshold_v1",
+          "schema_version": 1,
+          "top_k": 3
+        },
+        "sparse_hybrid": {
+          "case_count": 6,
+          "cases": [
+            {
+              "case_id": "recovery-objectives-025",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "payments-roadmap",
+                "recovery-plan"
+              ]
+            },
+            {
+              "case_id": "purchase-signoff-026",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "spending-authority"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "purchase-catalog",
+                "spending-authority"
+              ]
+            },
+            {
+              "case_id": "release-accessibility-027",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "accessibility-gate"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "accessibility-gate",
+                "interface-inventory"
+              ]
+            },
+            {
+              "case_id": "departure-revocation-028",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "offboarding-security"
+              ],
+              "recall_at_k": 0.0,
+              "reciprocal_rank": 0.0,
+              "retrieved_sources": [
+                "application-catalog"
+              ]
+            },
+            {
+              "case_id": "retention-conflict-029",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "dpa-signed",
+                "security-addendum"
+              ],
+              "recall_at_k": 0.5,
+              "reciprocal_rank": 0.3333333333333333,
+              "retrieved_sources": [
+                "supplier-directory",
+                "deletion-runbook",
+                "security-addendum"
+              ]
+            },
+            {
+              "case_id": "penetration-result-030",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "security-schedule",
+                "release-inventory"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 5,
+          "dataset": "candidate_test",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 0.2719,
+            "p50": 0.1194,
+            "p95": 0.1641,
+            "sample_count": 60
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.0,
+            "mean_reciprocal_rank": 0.4667,
+            "source_recall_at_k": 0.7
+          },
+          "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+          "schema_version": 1,
+          "top_k": 3
+        }
+      }
+    },
+    "expanded_synthetic": {
+      "dense_corpus_prewarm": {
+        "chunk_count": 97,
+        "corpus_count": 30,
+        "latency_ms": 984.4608
+      },
+      "quality_delta_dense_minus_sparse": {
+        "evidence_absence_accuracy": -0.4,
+        "mean_reciprocal_rank": 0.02,
+        "source_recall_at_k": -0.04
+      },
+      "results": {
+        "dense": {
+          "case_count": 30,
+          "cases": [
+            {
+              "case_id": "release-grounded-001",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-brief",
+                "support-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "support-plan",
+                "release-brief"
+              ]
+            },
+            {
+              "case_id": "release-missing-002",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-scope"
+              ],
+              "recall_at_k": 0.0,
+              "reciprocal_rank": 0.0,
+              "retrieved_sources": []
+            },
+            {
+              "case_id": "incident-runbook-003",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-runbook"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-runbook"
+              ]
+            },
+            {
+              "case_id": "vendor-conflict-004",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "commercial-terms",
+                "security-review"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "security-review",
+                "commercial-terms"
+              ]
+            },
+            {
+              "case_id": "onboarding-access-005",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "access-checklist"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "access-checklist"
+              ]
+            },
+            {
+              "case_id": "release-unsupported-006",
+              "evidence_absence_correct": true,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": []
+            },
+            {
+              "case_id": "release-paraphrase-007",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-procedure"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "recovery-procedure",
+                "launch-calendar"
+              ]
+            },
+            {
+              "case_id": "access-paraphrase-008",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "access-policy"
+              ],
+              "recall_at_k": 0.0,
+              "reciprocal_rank": 0.0,
+              "retrieved_sources": [
+                "safety-training",
+                "staffing-calendar",
+                "archive-catalog"
+              ]
+            },
+            {
+              "case_id": "incident-paraphrase-009",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-procedure"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-procedure",
+                "program-roster",
+                "test-report"
+              ]
+            },
+            {
+              "case_id": "vendor-distractors-010",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "commercial-review",
+                "security-review"
+              ],
+              "recall_at_k": 0.5,
+              "reciprocal_rank": 0.3333333333333333,
+              "retrieved_sources": [
+                "vendor-directory",
+                "compliance-calendar",
+                "commercial-review"
+              ]
+            },
+            {
+              "case_id": "release-conflict-011",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "runbook-a",
+                "runbook-b"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "runbook-b",
+                "runbook-a",
+                "meeting-records"
+              ]
+            },
+            {
+              "case_id": "absence-distractors-012",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "emergency-contacts",
+                "database-inventory",
+                "training-calendar"
+              ]
+            },
+            {
+              "case_id": "support-coverage-completion-013",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-controls",
+                "support-roster"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "support-roster",
+                "release-controls",
+                "test-report"
+              ]
+            },
+            {
+              "case_id": "test-coverage-false-friend-014",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-runbook"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-runbook",
+                "test-coverage"
+              ]
+            },
+            {
+              "case_id": "market-coverage-false-friend-015",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-controls"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-controls",
+                "market-report",
+                "office-directory"
+              ]
+            },
+            {
+              "case_id": "redundant-support-coverage-016",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-readiness"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-readiness",
+                "benefits-guide",
+                "training-calendar"
+              ]
+            },
+            {
+              "case_id": "support-coverage-query-017",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "support-roster"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "support-roster",
+                "test-report",
+                "office-plan"
+              ]
+            },
+            {
+              "case_id": "coverage-compound-abstention-018",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "rollback-training",
+                "support-roster",
+                "approval-directory"
+              ]
+            },
+            {
+              "case_id": "change-freeze-019",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "change-control-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "change-control-policy",
+                "blackout-calendar"
+              ]
+            },
+            {
+              "case_id": "retention-erasure-020",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "retention-standard"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "retention-standard",
+                "customer-directory",
+                "offboarding-checklist"
+              ]
+            },
+            {
+              "case_id": "supplier-insurance-021",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "supplier-terms"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "supplier-terms",
+                "vendor-catalog",
+                "insurance-directory"
+              ]
+            },
+            {
+              "case_id": "incident-notification-022",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-communications"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-communications",
+                "service-calendar"
+              ]
+            },
+            {
+              "case_id": "contractor-screening-023",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "contractor-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "contractor-policy",
+                "credential-inventory",
+                "screening-calendar"
+              ]
+            },
+            {
+              "case_id": "residency-exception-024",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "residency-policy",
+                "region-inventory",
+                "exception-template"
+              ]
+            },
+            {
+              "case_id": "recovery-objectives-025",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "recovery-plan",
+                "payments-roadmap",
+                "recovery-training"
+              ]
+            },
+            {
+              "case_id": "purchase-signoff-026",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "spending-authority"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "spending-authority"
+              ]
+            },
+            {
+              "case_id": "release-accessibility-027",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "accessibility-gate"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "accessibility-gate",
+                "interface-inventory",
+                "launch-calendar"
+              ]
+            },
+            {
+              "case_id": "departure-revocation-028",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "offboarding-security"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "offboarding-security",
+                "departure-calendar",
+                "credential-style"
+              ]
+            },
+            {
+              "case_id": "retention-conflict-029",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "dpa-signed",
+                "security-addendum"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "dpa-signed",
+                "security-addendum",
+                "supplier-directory"
+              ]
+            },
+            {
+              "case_id": "penetration-result-030",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "security-schedule",
+                "finding-template",
+                "testing-roster"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 25,
+          "dataset": "expanded_synthetic",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 18.1918,
+            "p50": 11.4205,
+            "p95": 12.8646,
+            "sample_count": 300
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.2,
+            "mean_reciprocal_rank": 0.8933,
+            "source_recall_at_k": 0.9
+          },
+          "retriever": "dense_cosine_threshold_v1",
+          "schema_version": 1,
+          "top_k": 3
+        },
+        "sparse_hybrid": {
+          "case_count": 30,
+          "cases": [
+            {
+              "case_id": "release-grounded-001",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-brief",
+                "support-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-brief",
+                "support-plan"
+              ]
+            },
+            {
+              "case_id": "release-missing-002",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-scope"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-scope"
+              ]
+            },
+            {
+              "case_id": "incident-runbook-003",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-runbook"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-runbook"
+              ]
+            },
+            {
+              "case_id": "vendor-conflict-004",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "commercial-terms",
+                "security-review"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "security-review",
+                "commercial-terms"
+              ]
+            },
+            {
+              "case_id": "onboarding-access-005",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "access-checklist"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "access-checklist"
+              ]
+            },
+            {
+              "case_id": "release-unsupported-006",
+              "evidence_absence_correct": true,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": []
+            },
+            {
+              "case_id": "release-paraphrase-007",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-procedure"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "recovery-procedure"
+              ]
+            },
+            {
+              "case_id": "access-paraphrase-008",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "access-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "access-policy",
+                "safety-training",
+                "archive-catalog"
+              ]
+            },
+            {
+              "case_id": "incident-paraphrase-009",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-procedure"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "incident-procedure"
+              ]
+            },
+            {
+              "case_id": "vendor-distractors-010",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "commercial-review",
+                "security-review"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "commercial-review",
+                "security-review",
+                "vendor-directory"
+              ]
+            },
+            {
+              "case_id": "release-conflict-011",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "runbook-a",
+                "runbook-b"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "runbook-b",
+                "runbook-a"
+              ]
+            },
+            {
+              "case_id": "absence-distractors-012",
+              "evidence_absence_correct": true,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": []
+            },
+            {
+              "case_id": "support-coverage-completion-013",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-controls",
+                "support-roster"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-controls",
+                "support-roster",
+                "test-report"
+              ]
+            },
+            {
+              "case_id": "test-coverage-false-friend-014",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-runbook"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-runbook",
+                "training-roster",
+                "test-coverage"
+              ]
+            },
+            {
+              "case_id": "market-coverage-false-friend-015",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-controls"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-controls",
+                "office-directory",
+                "market-report"
+              ]
+            },
+            {
+              "case_id": "redundant-support-coverage-016",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "release-readiness"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "release-readiness",
+                "training-calendar",
+                "benefits-guide"
+              ]
+            },
+            {
+              "case_id": "support-coverage-query-017",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "support-roster"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "support-roster",
+                "test-report",
+                "office-plan"
+              ]
+            },
+            {
+              "case_id": "coverage-compound-abstention-018",
+              "evidence_absence_correct": true,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": []
+            },
+            {
+              "case_id": "change-freeze-019",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "change-control-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "change-control-policy",
+                "blackout-calendar",
+                "production-inventory"
+              ]
+            },
+            {
+              "case_id": "retention-erasure-020",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "retention-standard"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "retention-standard"
+              ]
+            },
+            {
+              "case_id": "supplier-insurance-021",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "supplier-terms"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "supplier-terms",
+                "ordering-guide"
+              ]
+            },
+            {
+              "case_id": "incident-notification-022",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "incident-communications"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "service-calendar",
+                "incident-communications"
+              ]
+            },
+            {
+              "case_id": "contractor-screening-023",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "contractor-policy"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "contractor-policy",
+                "screening-calendar"
+              ]
+            },
+            {
+              "case_id": "residency-exception-024",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "residency-policy",
+                "executive-directory",
+                "exception-template"
+              ]
+            },
+            {
+              "case_id": "recovery-objectives-025",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "recovery-plan"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "payments-roadmap",
+                "recovery-plan"
+              ]
+            },
+            {
+              "case_id": "purchase-signoff-026",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "spending-authority"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 0.5,
+              "retrieved_sources": [
+                "purchase-catalog",
+                "spending-authority"
+              ]
+            },
+            {
+              "case_id": "release-accessibility-027",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "accessibility-gate"
+              ],
+              "recall_at_k": 1.0,
+              "reciprocal_rank": 1.0,
+              "retrieved_sources": [
+                "accessibility-gate",
+                "interface-inventory"
+              ]
+            },
+            {
+              "case_id": "departure-revocation-028",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "offboarding-security"
+              ],
+              "recall_at_k": 0.0,
+              "reciprocal_rank": 0.0,
+              "retrieved_sources": [
+                "application-catalog"
+              ]
+            },
+            {
+              "case_id": "retention-conflict-029",
+              "evidence_absence_correct": null,
+              "expected_sources": [
+                "dpa-signed",
+                "security-addendum"
+              ],
+              "recall_at_k": 0.5,
+              "reciprocal_rank": 0.3333333333333333,
+              "retrieved_sources": [
+                "supplier-directory",
+                "deletion-runbook",
+                "security-addendum"
+              ]
+            },
+            {
+              "case_id": "penetration-result-030",
+              "evidence_absence_correct": false,
+              "expected_sources": [],
+              "recall_at_k": null,
+              "reciprocal_rank": null,
+              "retrieved_sources": [
+                "security-schedule",
+                "release-inventory"
+              ]
+            }
+          ],
+          "cases_with_expected_evidence": 25,
+          "dataset": "expanded_synthetic",
+          "environment": {
+            "machine": "arm64",
+            "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+            "python": "3.13.3"
+          },
+          "latency_ms": {
+            "maximum": 2.1981,
+            "p50": 0.1071,
+            "p95": 0.152,
+            "sample_count": 300
+          },
+          "methodology": {
+            "chunk_words": 120,
+            "corpus": "synthetic",
+            "overlap_words": 30,
+            "runs_per_case": 10
+          },
+          "quality": {
+            "evidence_absence_accuracy": 0.6,
+            "mean_reciprocal_rank": 0.8733,
+            "source_recall_at_k": 0.94
+          },
+          "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+          "schema_version": 1,
+          "top_k": 3
+        }
+      }
+    }
+  },
+  "suite": "dense_retrieval_candidate_comparison_v1",
+  "threshold_calibration": {
+    "candidates": [
+      {
+        "objective": 0.6667,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "source_recall_at_k": 1.0
+        },
+        "threshold": 0.2
+      },
+      {
+        "objective": 0.6667,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "source_recall_at_k": 1.0
+        },
+        "threshold": 0.25
+      },
+      {
+        "objective": 0.6667,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "source_recall_at_k": 1.0
+        },
+        "threshold": 0.3
+      },
+      {
+        "objective": 0.6667,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "source_recall_at_k": 1.0
+        },
+        "threshold": 0.35
+      },
+      {
+        "objective": 0.6667,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "source_recall_at_k": 1.0
+        },
+        "threshold": 0.4
+      },
+      {
+        "objective": 0.6667,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 1.0,
+          "source_recall_at_k": 1.0
+        },
+        "threshold": 0.45
+      },
+      {
+        "objective": 0.5333,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 0.8,
+          "source_recall_at_k": 0.8
+        },
+        "threshold": 0.5
+      },
+      {
+        "objective": 0.5333,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 0.8,
+          "source_recall_at_k": 0.8
+        },
+        "threshold": 0.55
+      },
+      {
+        "objective": 0.4,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 0.6,
+          "source_recall_at_k": 0.6
+        },
+        "threshold": 0.6
+      },
+      {
+        "objective": 0.1333,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 0.2,
+          "source_recall_at_k": 0.2
+        },
+        "threshold": 0.65
+      },
+      {
+        "objective": 0.1333,
+        "quality": {
+          "evidence_absence_accuracy": 0.0,
+          "mean_reciprocal_rank": 0.2,
+          "source_recall_at_k": 0.2
+        },
+        "threshold": 0.7
+      },
+      {
+        "objective": 0.3333,
+        "quality": {
+          "evidence_absence_accuracy": 1.0,
+          "mean_reciprocal_rank": 0.0,
+          "source_recall_at_k": 0.0
+        },
+        "threshold": 0.75
+      },
+      {
+        "objective": 0.3333,
+        "quality": {
+          "evidence_absence_accuracy": 1.0,
+          "mean_reciprocal_rank": 0.0,
+          "source_recall_at_k": 0.0
+        },
+        "threshold": 0.8
+      }
+    ],
+    "selected_threshold": 0.2,
+    "selection_objective": "mean(source_recall_at_k, mean_reciprocal_rank, evidence_absence_accuracy)",
+    "split": "candidate_development",
+    "tie_break": "lower_threshold_to_retain_evidence"
+  },
+  "top_k": 3
+}

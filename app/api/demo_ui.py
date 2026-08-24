@@ -162,6 +162,10 @@ def render_demo_ui() -> HTMLResponse:
       box-shadow: none;
     }
 
+    button.danger {
+      background: linear-gradient(135deg, #be123c 0%, #881337 100%);
+    }
+
     button:hover { transform: translateY(-1px); }
     button:disabled { opacity: 0.65; cursor: wait; transform: none; }
 
@@ -230,6 +234,30 @@ def render_demo_ui() -> HTMLResponse:
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--muted);
+    }
+
+    .approval-copy {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .audit-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .audit-list li {
+      display: grid;
+      gap: 4px;
+      border-left: 3px solid #9fcfc8;
+      padding-left: 12px;
+    }
+
+    .audit-meta {
+      color: var(--muted);
+      font-family: "Trebuchet MS", "Avenir Next", sans-serif;
+      font-size: 0.84rem;
     }
 
     .placeholder,
@@ -358,7 +386,7 @@ def render_demo_ui() -> HTMLResponse:
       <h1>workflow-copilot demo UI</h1>
       <p class="subtitle">
         Try the deterministic planning engine in one screen. Paste an operational request, add the requester role and team,
-        preview the generated workflow, and optionally save the plan so recent work stays visible in the demo.
+        save the generated workflow, and move it through a human approval flow with a visible audit trail.
       </p>
     </section>
 
@@ -383,6 +411,11 @@ def render_demo_ui() -> HTMLResponse:
           <label>
             Team name
             <input id="team-name" name="team_name" value="Platform" />
+          </label>
+
+          <label>
+            Acting user
+            <input id="actor-name" name="actor_name" value="Jorge Castillo" />
           </label>
 
           <div class="button-row">
@@ -477,6 +510,49 @@ def render_demo_ui() -> HTMLResponse:
       });
     }
 
+    function humanize(value) {
+      return String(value || "").replaceAll("_", " ");
+    }
+
+    function renderApprovalControls(data) {
+      if (!data.workflow_id || !data.approval_status) {
+        return "";
+      }
+
+      let actions = "";
+      if (data.approval_status === "draft" || data.approval_status === "rejected") {
+        actions = '<button type="button" data-approval-action="submit">Submit for approval</button>';
+      } else if (data.approval_status === "pending_approval") {
+        actions = `
+          <label>
+            Decision note
+            <input id="decision-note" name="decision_note" placeholder="Required when rejecting; optional when approving" />
+          </label>
+          <button type="button" data-approval-action="approved">Approve plan</button>
+          <button type="button" class="danger" data-approval-action="rejected">Reject plan</button>
+        `;
+      }
+
+      const decision = data.decision_by
+        ? `<p class="approval-copy">Last decision by <strong>${escapeHtml(data.decision_by)}</strong>${data.decision_note ? ` — ${escapeHtml(data.decision_note)}` : ""}</p>`
+        : '<p class="approval-copy">No approval decision has been recorded.</p>';
+
+      return `
+        <section class="card full">
+          <h3>Human approval</h3>
+          <div class="badges">
+            <span class="badge">Status: ${escapeHtml(humanize(data.approval_status))}</span>
+          </div>
+          ${decision}
+          ${actions ? `<div class="button-row">${actions}</div>` : ""}
+        </section>
+        <section class="card full" id="audit-card">
+          <h3>Audit trail</h3>
+          <p class="approval-copy">Loading recorded workflow events...</p>
+        </section>
+      `;
+    }
+
     function renderProgress(item) {
       const total = item.total_step_count || 0;
       const completed = item.completed_step_count || 0;
@@ -521,6 +597,7 @@ def render_demo_ui() -> HTMLResponse:
             <span class="badge">Workflow type: ${escapeHtml(data.workflow_type.replaceAll("_", " "))}</span>
             <span class="badge">Urgency: ${escapeHtml(data.urgency)}</span>
             <span class="badge">Source: ${escapeHtml(sourceLabel)}</span>
+            ${data.approval_status ? `<span class="badge">Approval: ${escapeHtml(humanize(data.approval_status))}</span>` : ""}
             ${createdAt ? `<span class="badge">Created: ${escapeHtml(createdAt)}</span>` : ""}
             ${updatedAt ? `<span class="badge">Updated: ${escapeHtml(updatedAt)}</span>` : ""}
           </div>
@@ -546,7 +623,24 @@ def render_demo_ui() -> HTMLResponse:
           <h3>Success checks</h3>
           ${renderList(successChecks)}
         </section>
+        ${renderApprovalControls(data)}
       `;
+
+      resultsRoot.querySelectorAll("[data-approval-action]").forEach((button) => {
+        button.addEventListener("click", () => performApprovalAction(button.dataset.approvalAction));
+      });
+
+      if (data.workflow_id) {
+        loadAuditEvents(data.workflow_id).catch((error) => {
+          const auditCard = document.getElementById("audit-card");
+          if (auditCard) {
+            auditCard.innerHTML = `
+              <h3>Audit trail</h3>
+              <p class="hint">${escapeHtml(error.message)}</p>
+            `;
+          }
+        });
+      }
     }
 
     function renderSavedPlans(items) {
@@ -572,6 +666,7 @@ def render_demo_ui() -> HTMLResponse:
               <div class="saved-item-meta">
                 <span>${escapeHtml(item.workflow_type.replaceAll("_", " "))}</span>
                 <span>${escapeHtml(item.urgency)}</span>
+                <span>approval: ${escapeHtml(humanize(item.approval_status))}</span>
                 <span>${escapeHtml(item.workflow_id)}</span>
               </div>
               ${renderProgress(item)}
@@ -587,6 +682,86 @@ def render_demo_ui() -> HTMLResponse:
       savedPlansRoot.querySelectorAll("[data-workflow-id]").forEach((button) => {
         button.addEventListener("click", () => loadSavedPlan(button.dataset.workflowId));
       });
+    }
+
+    async function loadAuditEvents(workflowId) {
+      const auditCard = document.getElementById("audit-card");
+      if (!auditCard) {
+        return;
+      }
+
+      const response = await fetch(`/workflow/plans/${workflowId}/audit-events`);
+      const events = await response.json();
+      if (!response.ok) {
+        const detail = typeof events.detail === "string" ? events.detail : "Unable to load the audit trail.";
+        throw new Error(detail);
+      }
+
+      const rows = events.map((event) => {
+        const details = Object.entries(event.details || {})
+          .map(([key, value]) => `${humanize(key)}: ${value}`)
+          .join(" · ");
+        return `
+          <li>
+            <strong>${escapeHtml(humanize(event.event_type))}</strong>
+            <span class="audit-meta">${escapeHtml(event.actor)} · ${escapeHtml(formatTimestamp(event.created_at) || event.created_at)}</span>
+            ${details ? `<span class="audit-meta">${escapeHtml(details)}</span>` : ""}
+          </li>
+        `;
+      });
+
+      auditCard.innerHTML = `
+        <h3>Audit trail</h3>
+        ${rows.length ? `<ul class="audit-list">${rows.join("")}</ul>` : '<p class="approval-copy">No events recorded.</p>'}
+      `;
+    }
+
+    async function performApprovalAction(action) {
+      if (!activeSavedWorkflowId) {
+        statusText.textContent = "Save or open a plan before using the approval workflow.";
+        statusText.className = "status error";
+        return;
+      }
+
+      const actor = document.getElementById("actor-name").value.trim();
+      if (actor.length < 2) {
+        statusText.textContent = "Enter an acting user so the approval event can be attributed.";
+        statusText.className = "status error";
+        return;
+      }
+
+      let endpoint = `/workflow/plans/${activeSavedWorkflowId}/approval-requests`;
+      let payload = { actor };
+      if (action !== "submit") {
+        const note = document.getElementById("decision-note")?.value.trim() || "";
+        if (action === "rejected" && !note.trim()) {
+          statusText.textContent = "A rejection reason is required.";
+          statusText.className = "status error";
+          return;
+        }
+        endpoint = `/workflow/plans/${activeSavedWorkflowId}/approval-decisions`;
+        payload = { actor, decision: action, note: note.trim() || null };
+      }
+
+      statusText.textContent = action === "submit" ? "Submitting plan for approval..." : `Recording ${action} decision...`;
+      statusText.className = "status";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        const detail = typeof data.detail === "string" ? data.detail : "Unable to update approval state.";
+        statusText.textContent = detail;
+        statusText.className = "status error";
+        return;
+      }
+
+      renderResponse(data, `saved plan ${data.workflow_id}`);
+      await loadSavedPlans();
+      statusText.textContent = `Approval status is now ${humanize(data.approval_status)}.`;
     }
 
     async function loadSavedPlans() {

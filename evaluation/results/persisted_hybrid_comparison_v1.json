@@ -1,0 +1,554 @@
+{
+  "case_count": 18,
+  "index": {
+    "backend": "sqlite",
+    "cold_build_latency_ms": {
+      "maximum": 0.7484,
+      "p50": 0.5573,
+      "p95": 0.7443,
+      "sample_count": 18,
+      "total": 10.483
+    },
+    "cold_builds": 18,
+    "fingerprint": "sha256_corpus_and_chunk_configuration",
+    "indexed_chunk_count": 49,
+    "indexed_corpus_count": 18,
+    "restart_disk_cache_hits": 18,
+    "restart_disk_load_latency_ms": {
+      "maximum": 0.1719,
+      "p50": 0.1073,
+      "p95": 0.1504,
+      "sample_count": 18,
+      "total": 2.0261
+    },
+    "size_bytes": 49152,
+    "warm_memory_cache_hits": 900
+  },
+  "quality_delta_persisted_minus_sparse": {
+    "evidence_absence_accuracy": 0.0,
+    "mean_reciprocal_rank": 0.0,
+    "source_recall_at_k": 0.0
+  },
+  "results": {
+    "persisted_hybrid": {
+      "case_count": 18,
+      "cases": [
+        {
+          "case_id": "release-grounded-001",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-brief",
+            "support-plan"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-brief",
+            "support-plan"
+          ]
+        },
+        {
+          "case_id": "release-missing-002",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-scope"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-scope"
+          ]
+        },
+        {
+          "case_id": "incident-runbook-003",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "incident-runbook"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "incident-runbook"
+          ]
+        },
+        {
+          "case_id": "vendor-conflict-004",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "commercial-terms",
+            "security-review"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "security-review",
+            "commercial-terms"
+          ]
+        },
+        {
+          "case_id": "onboarding-access-005",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "access-checklist"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "access-checklist"
+          ]
+        },
+        {
+          "case_id": "release-unsupported-006",
+          "evidence_absence_correct": true,
+          "expected_sources": [],
+          "recall_at_k": null,
+          "reciprocal_rank": null,
+          "retrieved_sources": []
+        },
+        {
+          "case_id": "release-paraphrase-007",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "recovery-procedure"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "recovery-procedure"
+          ]
+        },
+        {
+          "case_id": "access-paraphrase-008",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "access-policy"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "access-policy",
+            "safety-training",
+            "archive-catalog"
+          ]
+        },
+        {
+          "case_id": "incident-paraphrase-009",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "incident-procedure"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "incident-procedure"
+          ]
+        },
+        {
+          "case_id": "vendor-distractors-010",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "commercial-review",
+            "security-review"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "commercial-review",
+            "security-review",
+            "vendor-directory"
+          ]
+        },
+        {
+          "case_id": "release-conflict-011",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "runbook-a",
+            "runbook-b"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "runbook-b",
+            "runbook-a"
+          ]
+        },
+        {
+          "case_id": "absence-distractors-012",
+          "evidence_absence_correct": true,
+          "expected_sources": [],
+          "recall_at_k": null,
+          "reciprocal_rank": null,
+          "retrieved_sources": []
+        },
+        {
+          "case_id": "support-coverage-completion-013",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-controls",
+            "support-roster"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-controls",
+            "support-roster",
+            "test-report"
+          ]
+        },
+        {
+          "case_id": "test-coverage-false-friend-014",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-runbook"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-runbook",
+            "training-roster",
+            "test-coverage"
+          ]
+        },
+        {
+          "case_id": "market-coverage-false-friend-015",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-controls"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-controls",
+            "office-directory",
+            "market-report"
+          ]
+        },
+        {
+          "case_id": "redundant-support-coverage-016",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-readiness"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-readiness",
+            "training-calendar",
+            "benefits-guide"
+          ]
+        },
+        {
+          "case_id": "support-coverage-query-017",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "support-roster"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "support-roster",
+            "test-report",
+            "office-plan"
+          ]
+        },
+        {
+          "case_id": "coverage-compound-abstention-018",
+          "evidence_absence_correct": true,
+          "expected_sources": [],
+          "recall_at_k": null,
+          "reciprocal_rank": null,
+          "retrieved_sources": []
+        }
+      ],
+      "cases_with_expected_evidence": 15,
+      "dataset": "workflow_evidence_extended_v1",
+      "environment": {
+        "machine": "arm64",
+        "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+        "python": "3.13.3"
+      },
+      "latency_ms": {
+        "maximum": 0.4828,
+        "p50": 0.082,
+        "p95": 0.131,
+        "sample_count": 900
+      },
+      "methodology": {
+        "chunk_words": 120,
+        "corpus": "synthetic",
+        "overlap_words": 30,
+        "runs_per_case": 50
+      },
+      "quality": {
+        "evidence_absence_accuracy": 1.0,
+        "mean_reciprocal_rank": 1.0,
+        "source_recall_at_k": 1.0
+      },
+      "retriever": "deterministic_sqlite_persisted_hybrid_v1",
+      "schema_version": 1,
+      "top_k": 3
+    },
+    "sparse_hybrid": {
+      "case_count": 18,
+      "cases": [
+        {
+          "case_id": "release-grounded-001",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-brief",
+            "support-plan"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-brief",
+            "support-plan"
+          ]
+        },
+        {
+          "case_id": "release-missing-002",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-scope"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-scope"
+          ]
+        },
+        {
+          "case_id": "incident-runbook-003",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "incident-runbook"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "incident-runbook"
+          ]
+        },
+        {
+          "case_id": "vendor-conflict-004",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "commercial-terms",
+            "security-review"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "security-review",
+            "commercial-terms"
+          ]
+        },
+        {
+          "case_id": "onboarding-access-005",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "access-checklist"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "access-checklist"
+          ]
+        },
+        {
+          "case_id": "release-unsupported-006",
+          "evidence_absence_correct": true,
+          "expected_sources": [],
+          "recall_at_k": null,
+          "reciprocal_rank": null,
+          "retrieved_sources": []
+        },
+        {
+          "case_id": "release-paraphrase-007",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "recovery-procedure"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "recovery-procedure"
+          ]
+        },
+        {
+          "case_id": "access-paraphrase-008",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "access-policy"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "access-policy",
+            "safety-training",
+            "archive-catalog"
+          ]
+        },
+        {
+          "case_id": "incident-paraphrase-009",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "incident-procedure"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "incident-procedure"
+          ]
+        },
+        {
+          "case_id": "vendor-distractors-010",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "commercial-review",
+            "security-review"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "commercial-review",
+            "security-review",
+            "vendor-directory"
+          ]
+        },
+        {
+          "case_id": "release-conflict-011",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "runbook-a",
+            "runbook-b"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "runbook-b",
+            "runbook-a"
+          ]
+        },
+        {
+          "case_id": "absence-distractors-012",
+          "evidence_absence_correct": true,
+          "expected_sources": [],
+          "recall_at_k": null,
+          "reciprocal_rank": null,
+          "retrieved_sources": []
+        },
+        {
+          "case_id": "support-coverage-completion-013",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-controls",
+            "support-roster"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-controls",
+            "support-roster",
+            "test-report"
+          ]
+        },
+        {
+          "case_id": "test-coverage-false-friend-014",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-runbook"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-runbook",
+            "training-roster",
+            "test-coverage"
+          ]
+        },
+        {
+          "case_id": "market-coverage-false-friend-015",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-controls"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-controls",
+            "office-directory",
+            "market-report"
+          ]
+        },
+        {
+          "case_id": "redundant-support-coverage-016",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "release-readiness"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "release-readiness",
+            "training-calendar",
+            "benefits-guide"
+          ]
+        },
+        {
+          "case_id": "support-coverage-query-017",
+          "evidence_absence_correct": null,
+          "expected_sources": [
+            "support-roster"
+          ],
+          "recall_at_k": 1.0,
+          "reciprocal_rank": 1.0,
+          "retrieved_sources": [
+            "support-roster",
+            "test-report",
+            "office-plan"
+          ]
+        },
+        {
+          "case_id": "coverage-compound-abstention-018",
+          "evidence_absence_correct": true,
+          "expected_sources": [],
+          "recall_at_k": null,
+          "reciprocal_rank": null,
+          "retrieved_sources": []
+        }
+      ],
+      "cases_with_expected_evidence": 15,
+      "dataset": "workflow_evidence_extended_v1",
+      "environment": {
+        "machine": "arm64",
+        "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+        "python": "3.13.3"
+      },
+      "latency_ms": {
+        "maximum": 1.9671,
+        "p50": 0.0921,
+        "p95": 0.155,
+        "sample_count": 900
+      },
+      "methodology": {
+        "chunk_words": 120,
+        "corpus": "synthetic",
+        "overlap_words": 30,
+        "runs_per_case": 50
+      },
+      "quality": {
+        "evidence_absence_accuracy": 1.0,
+        "mean_reciprocal_rank": 1.0,
+        "source_recall_at_k": 1.0
+      },
+      "retriever": "deterministic_bm25_concept_vector_hybrid_v3",
+      "schema_version": 1,
+      "top_k": 3
+    }
+  },
+  "runs_per_case": 50,
+  "schema_version": 1,
+  "suite": "workflow_evidence_extended_v1",
+  "top_k": 3
+}

@@ -1,0 +1,2 @@
+# Optional local evaluation dependency. Not installed in the API image.
+fastembed==0.8.0

@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-workflow_copilot}
+      POSTGRES_USER: ${POSTGRES_USER:-workflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-workflow-local}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - workflow_postgres_data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      WORKFLOW_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-workflow}:${POSTGRES_PASSWORD:-workflow-local}@db:5432/${POSTGRES_DB:-workflow_copilot}
+      WORKFLOW_AUTO_CREATE_SCHEMA: "0"
+      WORKFLOW_CORS_ORIGINS: ${WORKFLOW_CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      WORKFLOW_LOG_LEVEL: ${WORKFLOW_LOG_LEVEL:-INFO}
+      WORKFLOW_HYBRID_INDEX_PATH: /app/data/workflow_hybrid_index.db
+      WORKFLOW_HYBRID_INDEX_COMPACT_ON_DELETE: ${WORKFLOW_HYBRID_INDEX_COMPACT_ON_DELETE:-0}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "8000:8000"
+    volumes:
+      - workflow_hybrid_index_data:/app/data
+
+  web:
+    build:
+      context: frontend
+      dockerfile: Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "5173:8080"
+
+volumes:
+  workflow_postgres_data:
+  workflow_hybrid_index_data:

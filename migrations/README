@@ -1,0 +1,4 @@
+Alembic migration environment for workflow-copilot plans, audit events, and evidence.
+
+Set WORKFLOW_DATABASE_URL before running `alembic upgrade head` to target a
+database other than the default local SQLite file.
